@@ -534,7 +534,6 @@ PATH_FUNCTION_COUNT: 'count' '()';
 
 pathFunctionGet
     : PATH_FUNCTION_GET '(' pathFunctionParams ')'
-    | PATH_FUNCTION_GET '()'
     ;
 
 pathFunctionParams: pathFunctionParam (',' pathFunctionParam)*?;
