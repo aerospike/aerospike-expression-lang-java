@@ -776,12 +776,15 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
     public AbstractPart visitPathFunctionGet(ConditionParser.PathFunctionGetContext ctx) {
         PathFunction.ReturnParam returnParam = null;
         Exp.Type binType = null;
-        for (ConditionParser.PathFunctionParamContext paramCtx : ctx.pathFunctionParams().pathFunctionParam()) {
-            if (paramCtx != null) {
-                String typeVal = getPathFunctionParam(paramCtx, "type");
-                if (typeVal != null) binType = Exp.Type.valueOf(typeVal);
-                String returnVal = getPathFunctionParam(paramCtx, "return");
-                if (returnVal != null) returnParam = PathFunction.ReturnParam.valueOf(returnVal);
+        ConditionParser.PathFunctionParamsContext params = ctx.pathFunctionParams();
+        if (params != null) {
+            for (ConditionParser.PathFunctionParamContext paramCtx : params.pathFunctionParam()) {
+                if (paramCtx != null) {
+                    String typeVal = getPathFunctionParam(paramCtx, "type");
+                    if (typeVal != null) binType = Exp.Type.valueOf(typeVal);
+                    String returnVal = getPathFunctionParam(paramCtx, "return");
+                    if (returnVal != null) returnParam = PathFunction.ReturnParam.valueOf(returnVal);
+                }
             }
         }
         return new PathFunction(PathFunction.PathFunctionType.GET, returnParam, binType);
