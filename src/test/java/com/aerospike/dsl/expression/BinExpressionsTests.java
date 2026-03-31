@@ -60,6 +60,7 @@ class BinExpressionsTests {
         parseFilterExpressionAndCompare(ExpressionContext.of("$.intBin1 != 100"), Exp.ne(Exp.intBin("intBin1"), Exp.val(100)));
         parseFilterExpressionAndCompare(ExpressionContext.of("$.strBin != \"yes\""), Exp.ne(Exp.stringBin("strBin"), Exp.val("yes")));
         parseFilterExpressionAndCompare(ExpressionContext.of("$.strBin != 'yes'"), Exp.ne(Exp.stringBin("strBin"), Exp.val("yes")));
+        parseFilterExpressionAndCompare(ExpressionContext.of("$.intBin1.get() != 100"), Exp.ne(Exp.intBin("intBin1"), Exp.val(100)));
     }
 
     @Test
