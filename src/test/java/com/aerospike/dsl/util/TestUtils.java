@@ -132,6 +132,18 @@ public class TestUtils {
     }
 
     /**
+     * Parses two DSL expression strings and asserts that they produce identical packed {@link Expression} bytes.
+     *
+     * @param dslActual   The DSL string whose result is being verified
+     * @param dslExpected The reference DSL string that defines the expected result
+     */
+    public static void parseDslAndCompare(String dslActual, String dslExpected) {
+        Expression actual = Exp.build(parser.parseExpression(ExpressionContext.of(dslActual)).getResult().getExp());
+        Expression expected = Exp.build(parser.parseExpression(ExpressionContext.of(dslExpected)).getResult().getExp());
+        assertEquals(expected, actual);
+    }
+
+    /**
      * Parses the given DSL path String into array of {@link CTX}.
      *
      * @param pathToCtx String input representing DSL path
