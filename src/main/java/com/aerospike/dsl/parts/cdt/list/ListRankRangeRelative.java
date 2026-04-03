@@ -7,9 +7,9 @@ import com.aerospike.dsl.client.cdt.ListReturnType;
 import com.aerospike.dsl.client.exp.Exp;
 import com.aerospike.dsl.client.exp.ListExp;
 import com.aerospike.dsl.parts.path.BasePath;
-
 import com.aerospike.dsl.util.ParsingUtils;
 
+import static com.aerospike.dsl.util.ParsingUtils.objectToExp;
 import static com.aerospike.dsl.util.ParsingUtils.parseSignedInt;
 import static com.aerospike.dsl.util.ParsingUtils.subtractNullable;
 
@@ -60,14 +60,7 @@ public class ListRankRangeRelative extends ListPart {
             cdtReturnType = cdtReturnType | ListReturnType.INVERTED;
         }
 
-        Exp relativeExp;
-        if (relative instanceof String rel) {
-            relativeExp = Exp.val(rel);
-        } else if (relative instanceof Integer rel) {
-            relativeExp = Exp.val(rel);
-        } else {
-            throw new DslParseException("Unsupported value relative rank");
-        }
+        Exp relativeExp = objectToExp(relative);
 
         Exp startExp = Exp.val(start);
         if (count == null) {

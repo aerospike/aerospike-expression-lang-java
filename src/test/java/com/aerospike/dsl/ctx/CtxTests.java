@@ -195,4 +195,18 @@ class CtxTests {
         parseCtxAndCompareAsBase64("$.mapBin1.{=100}.[#-1].{#-1}.[0]",
                 new CTX[]{CTX.mapValue(Value.get(100)), CTX.listRank(-1), CTX.mapRank(-1), CTX.listIndex(0)});
     }
+
+    // ---- BLOB in parseCTX ----
+
+    @Test
+    void parseCTXWithBlobValue() {
+        parseCtxAndCompareAsBase64("$.bin.[=X'ff00']",
+                new CTX[]{CTX.listValue(Value.get(new byte[]{(byte) 0xff, 0x00}))});
+    }
+
+    @Test
+    void parseCTXWithB64BlobValue() {
+        parseCtxAndCompareAsBase64("$.bin.[=b64'AQID']",
+                new CTX[]{CTX.listValue(Value.get(new byte[]{1, 2, 3}))});
+    }
 }

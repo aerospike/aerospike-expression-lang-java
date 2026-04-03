@@ -17,12 +17,15 @@ import com.aerospike.dsl.client.exp.ListExp;
 import com.aerospike.dsl.client.exp.MapExp;
 import com.aerospike.dsl.client.query.Filter;
 import com.aerospike.dsl.client.query.IndexType;
+import com.aerospike.dsl.client.fluent.AerospikeComparator;
 import com.aerospike.dsl.util.TestUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import static com.aerospike.dsl.util.TestUtils.NAMESPACE;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -320,5 +323,47 @@ public class PlaceholdersTests {
         Exp exp = Exp.eq(Exp.val(42), Exp.val(42));
         TestUtils.parseDslExpressionAndCompare(ExpressionContext.of("?0 == ?1",
                 PlaceholderValues.of(42, 42)), null, exp);
+    }
+
+    // ---- BLOB Placeholder Binding ----
+
+    @Test
+    void blobPlaceholderByteArray() {
+        byte[] data = new byte[]{1, 2, 3};
+        Exp expected = Exp.eq(Exp.blobBin("b"), Exp.val(data));
+        TestUtils.parseDslExpressionAndCompare(
+                ExpressionContext.of("$.b.get(type: BLOB) == ?0", PlaceholderValues.of((Object) data)),
+                null, expected);
+    }
+
+    @Test
+    void blobPlaceholderMapWithKey() {
+        byte[] key = new byte[]{(byte) 0xff};
+        SortedMap<Object, Object> map = new TreeMap<>(new AerospikeComparator());
+        map.put(key, 42L);
+        Exp expected = Exp.eq(Exp.mapBin("mb"), Exp.val(map));
+        TestUtils.parseDslExpressionAndCompare(
+                ExpressionContext.of("$.mb.get(type: MAP) == ?0", PlaceholderValues.of(map)),
+                null, expected);
+    }
+
+    @Test
+    void blobPlaceholderListWithBlob() {
+        byte[] data = new byte[]{1, 2, 3};
+        List<Object> list = List.of(data, "hello");
+        Exp expected = Exp.eq(Exp.listBin("lb"), Exp.val(list));
+        TestUtils.parseDslExpressionAndCompare(
+                ExpressionContext.of("$.lb.get(type: LIST) == ?0", PlaceholderValues.of(list)),
+                null, expected);
+    }
+
+    @Test
+    void blobPlaceholderInBlobList() {
+        byte[] data1 = new byte[]{(byte) 0xaa};
+        byte[] data2 = new byte[]{(byte) 0xbb};
+        List<Object> list = List.of(data1, data2);
+        Expression actual = Exp.build(TestUtils.parseFilterExp(
+                ExpressionContext.of("$.b.get(type: BLOB) IN ?0", PlaceholderValues.of(list))));
+        assertThat(actual).isNotNull();
     }
 }

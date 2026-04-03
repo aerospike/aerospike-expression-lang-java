@@ -4,6 +4,7 @@ import com.aerospike.dsl.ConditionBaseVisitor;
 import com.aerospike.dsl.ConditionParser;
 import com.aerospike.dsl.DslParseException;
 import com.aerospike.dsl.client.exp.Exp;
+import com.aerospike.dsl.client.fluent.AerospikeComparator;
 import com.aerospike.dsl.parts.AbstractPart;
 import com.aerospike.dsl.parts.ExpressionContainer;
 import com.aerospike.dsl.parts.cdt.list.ListIndex;
@@ -18,9 +19,9 @@ import com.aerospike.dsl.parts.cdt.list.ListValueRange;
 import com.aerospike.dsl.parts.cdt.map.*;
 import com.aerospike.dsl.parts.controlstructure.AndStructure;
 import com.aerospike.dsl.parts.controlstructure.ExclusiveStructure;
+import com.aerospike.dsl.parts.controlstructure.LetStructure;
 import com.aerospike.dsl.parts.controlstructure.OrStructure;
 import com.aerospike.dsl.parts.controlstructure.WhenStructure;
-import com.aerospike.dsl.parts.controlstructure.LetStructure;
 import com.aerospike.dsl.parts.operand.*;
 import com.aerospike.dsl.parts.path.BasePath;
 import com.aerospike.dsl.parts.path.BinPart;
@@ -505,7 +506,8 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
             AbstractPart.PartType.BOOL_OPERAND,
             AbstractPart.PartType.STRING_OPERAND,
             AbstractPart.PartType.MAP_OPERAND,
-            AbstractPart.PartType.METADATA_OPERAND
+            AbstractPart.PartType.METADATA_OPERAND,
+            AbstractPart.PartType.BLOB_OPERAND
     );
 
     private static boolean isNotList(AbstractPart part) {
@@ -892,7 +894,7 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
         Object key = ((ParsedValueOperand) visit(ctx.getChild(0))).getValue();
         Object value = ((ParsedValueOperand) visit(ctx.getChild(2))).getValue();
 
-        SortedMap<Object, Object> map = new TreeMap<>();
+        SortedMap<Object, Object> map = new TreeMap<>(new AerospikeComparator());
         map.put(key, value);
 
         return map;
@@ -900,7 +902,7 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
 
     public MapOperand readChildrenIntoMapOperand(RuleNode mapNode) {
         int size = mapNode.getChildCount();
-        SortedMap<Object, Object> map = new TreeMap<>();
+        SortedMap<Object, Object> map = new TreeMap<>(new AerospikeComparator());
         for (int i = 0; i < size; i++) {
             ParseTree child = mapNode.getChild(i);
             if (!shouldVisitMapElement(i, size, child)) {
@@ -923,6 +925,14 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
     public AbstractPart visitStringOperand(ConditionParser.StringOperandContext ctx) {
         String text = unquote(ctx.getText());
         return new StringOperand(text);
+    }
+
+    @Override
+    public AbstractPart visitBlobOperand(ConditionParser.BlobOperandContext ctx) {
+        if (ctx.BLOB_LITERAL() != null) {
+            return new BlobOperand(parseHexToBytes(ctx.BLOB_LITERAL().getText()));
+        }
+        return new BlobOperand(parseB64ToBytes(ctx.B64_LITERAL().getText()));
     }
 
     @Override
