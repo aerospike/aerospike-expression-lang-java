@@ -83,6 +83,7 @@ operand
     | numberOperand
     | booleanOperand
     | stringOperand
+    | blobOperand
     | listConstant
     | orderedMapConstant
     | variable
@@ -134,6 +135,11 @@ stringOperand: QUOTED_STRING;
 
 QUOTED_STRING: ('\'' (~'\'')* '\'') | ('"' (~'"')* '"');
 
+blobOperand: BLOB_LITERAL | B64_LITERAL;
+
+BLOB_LITERAL: [xX] '\'' [0-9a-fA-F]* '\'';
+B64_LITERAL: [bB] '64\'' [A-Za-z0-9+/=]* '\'';
+
 // LIST_TYPE_DESIGNATOR is needed here because the lexer tokenizes '[]' as a single token,
 // preventing the parser from matching it as '[' ']' for empty list literals.
 listConstant: '[' unaryExpression? (',' unaryExpression)* ']' | LIST_TYPE_DESIGNATOR;
@@ -142,7 +148,7 @@ orderedMapConstant: '{' mapPairConstant? (',' mapPairConstant)* '}';
 
 mapPairConstant: mapKeyOperand ':' unaryExpression;
 
-mapKeyOperand: intOperand | stringOperand;
+mapKeyOperand: intOperand | stringOperand | blobOperand;
 
 variable: VARIABLE_REFERENCE;
 
@@ -499,6 +505,8 @@ valueIdentifier
     | QUOTED_STRING
     | signedInt
     | IN
+    | BLOB_LITERAL
+    | B64_LITERAL
     ;
 
 valueListIdentifier: valueIdentifier ',' valueIdentifier (',' valueIdentifier)*;

@@ -147,7 +147,40 @@ public class ParsingUtils {
         if (ctx.signedInt() != null) {
             return parseSignedInt(ctx.signedInt());
         }
+        TerminalNode blobLiteral = ctx.getToken(ConditionParser.BLOB_LITERAL, 0);
+        if (blobLiteral != null) {
+            return parseHexToBytes(blobLiteral.getText());
+        }
+        TerminalNode b64Literal = ctx.getToken(ConditionParser.B64_LITERAL, 0);
+        if (b64Literal != null) {
+            return parseB64ToBytes(b64Literal.getText());
+        }
         throw new DslParseException("Could not parse valueIdentifier from ctx: %s".formatted(ctx.getText()));
+    }
+
+    // Token format: X'hexchars' or x'hexchars' — strip 2-char prefix and trailing quote
+    public static byte[] parseHexToBytes(String text) {
+        String hex = text.substring(2, text.length() - 1);
+        if (hex.length() % 2 != 0) {
+            throw new DslParseException(
+                    "BLOB literal must contain an even number of hex characters: " + text);
+        }
+        byte[] bytes = new byte[hex.length() / 2];
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = (byte) Integer.parseInt(hex.substring(i * 2, i * 2 + 2), 16);
+        }
+        return bytes;
+    }
+
+    // Token format: b64'base64chars' or B64'base64chars' — strip 4-char prefix and trailing quote
+    public static byte[] parseB64ToBytes(String text) {
+        String b64 = text.substring(4, text.length() - 1);
+        try {
+            return java.util.Base64.getDecoder().decode(b64);
+        } catch (IllegalArgumentException e) {
+            throw new DslParseException(
+                    "Base64 BLOB literal contains invalid Base64 content: " + text, e);
+        }
     }
 
     /**
@@ -169,7 +202,8 @@ public class ParsingUtils {
 
     /**
      * Converts a parsed value object to an {@link Exp} value expression.
-     * Supports the types produced by {@link #parseValueIdentifier}: {@link String} and {@link Integer}.
+     * Supports the types produced by {@link #parseValueIdentifier}: {@link String}, {@link Integer},
+     * and {@code byte[]}.
      *
      * @param value The parsed value object
      * @return The corresponding {@link Exp} value expression
@@ -178,6 +212,7 @@ public class ParsingUtils {
     public static Exp objectToExp(Object value) {
         if (value instanceof String s) return Exp.val(s);
         if (value instanceof Integer i) return Exp.val(i);
+        if (value instanceof byte[] b) return Exp.val(b);
         throw new DslParseException(
                 "Unsupported value type for Exp conversion: " + value.getClass().getSimpleName());
     }
