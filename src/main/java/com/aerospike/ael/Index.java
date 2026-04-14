@@ -14,7 +14,8 @@ import lombok.Getter;
  * These are validated on build and must not be null/blank (for strings).
  * {@code binValuesRatio} defaults to 0 if not set and must not be negative.
  * <p>
- * Optional {@code setName} is the Aerospike set this index is defined on; it is used with {@link IndexContext#getQuerySet()}.
+ * Optional {@code setName} is the Aerospike set this index is defined on; it is used together with
+ * {@link IndexContext} when a query set is supplied for secondary-index selection.
  */
 @Getter
 @EqualsAndHashCode

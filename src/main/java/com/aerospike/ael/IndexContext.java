@@ -8,7 +8,7 @@ import java.util.Collection;
  * This class stores namespace and indexes required to build secondary index Filter.
  * <p>
  * When {@link #querySet} is set (same value as {@code Statement.setSetName}), only {@link Index} entries whose
- * {@link Index#getSetName()} matches, or have no set name, are used for secondary-index selection; when it is
+ * {@code setName} matches, or have no set name, are used for secondary-index selection; when it is
  * {@code null} or blank, no set-based filtering is applied.
  */
 @Getter
@@ -33,7 +33,7 @@ public class IndexContext {
     private final String preferredBin;
     /**
      * Aerospike set name for the query (same as {@code Statement.setSetName}). When non-null, indexes are
-     * filtered by {@link Index#getSetName()} via {@link #indexMatchesQuerySet(Index, String)}.
+     * filtered by each {@link Index}'s {@code setName} via {@link #indexMatchesQuerySet(Index, String)}.
      */
     private final String querySet;
 
@@ -86,7 +86,7 @@ public class IndexContext {
     /**
      * Create index context with namespace, indexes, and query set.
      * Same as {@link #of(String, Collection)} but applies set-based filtering: only indexes whose
-     * {@link Index#getSetName()} equals {@code querySet}, or have no set name, are used for selection.
+     * {@link Index} {@code setName} equals {@code querySet}, or have no set name, are used for selection.
      *
      * @param namespace Namespace to be used for creating {@link com.aerospike.dsl.client.query.Filter}.
      *                  Must not be null or blank
@@ -184,7 +184,7 @@ public class IndexContext {
     /**
      * Whether {@code idx} may be used when building filters for the given query set.
      * If {@code querySet} is null, any index is eligible. Otherwise, an index with no set name is eligible;
-     * otherwise its {@link Index#getSetName()} must equal {@code querySet}.
+     * otherwise its {@link Index} {@code setName} must equal {@code querySet}.
      *
      * @param idx       secondary index metadata; must not be null
      * @param querySet  normalized query set, or null to disable filtering
