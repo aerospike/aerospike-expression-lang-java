@@ -217,7 +217,7 @@ class IndexContextTests {
     }
 
     @Test
-    void of_3arg_resolves_preferred_bin_by_index_name_when_indexes_differ_by_set_name() {
+    void resolves_preferred_bin_by_index_name_when_indexes_differ_by_set_name() {
         Index idxSet = Index.builder().namespace(NAMESPACE).setName("set").bin("age").name("ageidx")
                 .indexType(IndexType.NUMERIC).binValuesRatio(1).build();
         Index idxScan = Index.builder().namespace(NAMESPACE).setName("testScan").bin("age").name("age_idx")
