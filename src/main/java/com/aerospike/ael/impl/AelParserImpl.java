@@ -86,8 +86,13 @@ public class AelParserImpl implements AelParser {
                 .map(IndexContext::getNamespace)
                 .orElse(null);
 
+        String querySet = Optional.ofNullable(indexContext)
+                .map(IndexContext::getQuerySet)
+                .orElse(null);
         Map<String, List<Index>> indexesMap = buildIndexesMap(
-                Optional.ofNullable(indexContext).map(IndexContext::getIndexes).orElse(null), namespace);
+                Optional.ofNullable(indexContext).map(IndexContext::getIndexes).orElse(null),
+                namespace,
+                querySet);
         String preferredBin = Optional.ofNullable(indexContext)
                 .map(IndexContext::getPreferredBin)
                 .orElse(null);
@@ -101,10 +106,12 @@ public class AelParserImpl implements AelParser {
         return new ParsedExpression(resultingPart, placeholderValues, indexesMap, preferredBin);
     }
 
-    private Map<String, List<Index>> buildIndexesMap(Collection<Index> indexes, String namespace) {
+    private Map<String, List<Index>> buildIndexesMap(Collection<Index> indexes, String namespace,
+                                                     String querySet) {
         if (indexes == null || indexes.isEmpty() || namespace == null) return Collections.emptyMap();
         return indexes.stream()
                 .filter(idx -> namespace.equals(idx.getNamespace()))
+                .filter(idx -> IndexContext.indexMatchesQuerySet(idx, querySet))
                 .collect(Collectors.groupingBy(Index::getBin));
     }
 }
