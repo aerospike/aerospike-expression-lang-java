@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.aerospike</groupId>
-    <artifactId>aerospike-expression-dsl</artifactId>
-    <name>aerospike-expression-dsl</name>
-    <description>Aerospike Expression DSL</description>
-    <url>https://github.com/aerospike/expression-dsl-java</url>
+    <artifactId>aerospike-expression-lang-java</artifactId>
+    <name>aerospike-expression-lang-java</name>
+    <description>Aerospike Expression Language</description>
+    <url>https://github.com/aerospike/aerospike-expression-lang-java</url>
     <packaging>jar</packaging>
     <version>0.3.0</version>
 
@@ -47,9 +47,9 @@
     </developers>
 
     <scm>
-        <url>https://github.com/aerospike/expression-dsl-java</url>
-        <connection>scm:git:git://github.com/aerospike/expression-dsl-java.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:aerospike/expression-dsl-java.git
+        <url>https://github.com/aerospike/aerospike-expression-lang-java</url>
+        <connection>scm:git:git://github.com/aerospike/aerospike-expression-lang-java.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:aerospike/aerospike-expression-lang-java.git
         </developerConnection>
     </scm>
 
@@ -135,8 +135,8 @@
                             <goal>antlr4</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>src/main/antlr4/com/aerospike/dsl</sourceDirectory>
-                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/com/aerospike/dsl</outputDirectory>
+                            <sourceDirectory>src/main/antlr4/com/aerospike/ael</sourceDirectory>
+                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/com/aerospike/ael</outputDirectory>
                             <listener>false</listener>
                             <arguments>
                                 <argument>-visitor</argument>
@@ -145,26 +145,6 @@
                             <includes>
                                 <include>Condition.g4</include>
                             </includes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>${build-helper-maven-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.build.directory}/generated-sources/antlr4/</source>
-                            </sources>
                         </configuration>
                     </execution>
                 </executions>

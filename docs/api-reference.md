@@ -1,49 +1,49 @@
 # API Reference
 
-The Expression DSL library has a concise API. This document highlights the most important classes and methods you will interact with.
+The Expression Language library has a concise API. This document highlights the most important classes and methods you will interact with.
 
 For a complete, detailed reference, please consult the Javadoc for the library.
 
 ## Core Classes
 
-### `com.aerospike.dsl.api.DSLParser`
+### `com.aerospike.ael.api.AelParser`
 
 This is the main interface and entry point for the library.
 
 *   **`ParsedExpression parseExpression(ExpressionContext input)`**
-    *   **Description**: The primary method used to parse a DSL string when no secondary indexes are provided. It returns a `ParsedExpression` object that contains the compiled result, which can be reused.
+    *   **Description**: The primary method used to parse a AEL string when no secondary indexes are provided. It returns a `ParsedExpression` object that contains the compiled result, which can be reused.
 *   **`ParsedExpression parseExpression(ExpressionContext input, IndexContext indexContext)`**
-    *   **Description**: The primary method used to parse a DSL string. It returns a `ParsedExpression` object that contains the compiled result, which can be reused.
+    *   **Description**: The primary method used to parse a AEL string. It returns a `ParsedExpression` object that contains the compiled result, which can be reused.
     *   **Parameters**:
-        *   `input`: An `ExpressionContext` object containing the DSL string and any placeholder values.
-    *   **Description**: The primary method used to parse a DSL string. It returns a `ParsedExpression` object that contains the compiled result, which can be reused.
+        *   `input`: An `ExpressionContext` object containing the AEL string and any placeholder values.
+    *   **Description**: The primary method used to parse a AEL string. It returns a `ParsedExpression` object that contains the compiled result, which can be reused.
     *   **Parameters**:
-        *   `input`: An `ExpressionContext` object containing the DSL string and any placeholder values.
+        *   `input`: An `ExpressionContext` object containing the AEL string and any placeholder values.
         *   `indexContext`: An optional `IndexContext` object containing a list of available secondary indexes for query optimization. Can be `null`.
     *   **Returns**: A `ParsedExpression` object representing the compiled expression tree.
 
-### `com.aerospike.dsl.ExpressionContext`
+### `com.aerospike.ael.ExpressionContext`
 
-This class is a container for the DSL string and any values to be substituted for placeholders.
+This class is a container for the AEL string and any values to be substituted for placeholders.
 
-*   **`static ExpressionContext of(String dslString)`**: Creates a context for a DSL string without placeholders.
-*   **`static ExpressionContext of(String dslString, PlaceholderValues values)`**: Creates a context for a DSL string that uses `?` placeholders, providing the values to be substituted.
+*   **`static ExpressionContext of(String aelString)`**: Creates a context for a AEL string without placeholders.
+*   **`static ExpressionContext of(String aelString, PlaceholderValues values)`**: Creates a context for a AEL string that uses `?` placeholders, providing the values to be substituted.
 
-### `com.aerospike.dsl.ParsedExpression`
+### `com.aerospike.ael.ParsedExpression`
 
 This object represents the compiled, reusable result of a parsing operation. It is thread-safe.
 
 *   **`ParseResult getResult()`**: Returns the final `ParseResult` for an expression that does not contain placeholders.
 *   **`ParseResult getResult(PlaceholderValues values)`**: Returns the final `ParseResult` by substituting the given placeholder values into the compiled expression tree. This is highly efficient as it bypasses the parsing step.
 
-### `com.aerospike.dsl.ParseResult`
+### `com.aerospike.ael.ParseResult`
 
 This class holds the final, concrete outputs of the parsing and substitution process.
 
-*   **`Filter getFilter()`**: Returns an Aerospike `Filter` object if the parser was able to optimize a portion of the DSL string into a secondary index query. Returns `null` if no optimization was possible.
-*   **`com.aerospike.client.exp.Expression.Exp getExp()`**: Returns the Aerospike `Exp` object representing the DSL filter logic. This is the part of the expression that will be executed on the server for records that pass the secondary index filter. If the entire DSL string was converted into a `Filter`, this may be `null`.
+*   **`Filter getFilter()`**: Returns an Aerospike `Filter` object if the parser was able to optimize a portion of the AEL string into a secondary index query. Returns `null` if no optimization was possible.
+*   **`com.aerospike.client.exp.Expression.Exp getExp()`**: Returns the Aerospike `Exp` object representing the AEL filter logic. This is the part of the expression that will be executed on the server for records that pass the secondary index filter. If the entire AEL string was converted into a `Filter`, this may be `null`.
 
-### `com.aerospike.dsl.IndexContext`
+### `com.aerospike.ael.IndexContext`
 
 A container for the information required for automatic secondary index optimization.
 
@@ -67,7 +67,7 @@ A container for the information required for automatic secondary index optimizat
     matches using the normal automatic rules (for example, index type and cardinality, then alphabetically).
     If no index matches the bin and namespace, or `binToUse` is `null` or blank, the parser falls back to fully
     automatic index selection.
-### `com.aerospike.dsl.Index`
+### `com.aerospike.ael.Index`
 
 Represents an available secondary index for optimization.
 
@@ -84,11 +84,11 @@ Here is a recap of how the classes work together in a typical use case:
 
 ```java
 // 1. Get a parser instance
-DSLParser parser = new DSLParserImpl();
+AelParser parser = new AelParserImpl();
 
 // 2. Define the context for the expression and placeholders
-String dsl = "$.age > ?0";
-ExpressionContext context = ExpressionContext.of(dsl, PlaceholderValues.of(30));
+String ael = "$.age > ?0";
+ExpressionContext context = ExpressionContext.of(ael, PlaceholderValues.of(30));
 
 // (Optional) Define the index context for optimization
 IndexContext indexContext = IndexContext.of("namespace", availableIndexes);

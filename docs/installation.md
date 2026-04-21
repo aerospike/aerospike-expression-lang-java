@@ -1,6 +1,6 @@
 # Installation & Setup
 
-This guide provides detailed instructions for adding the Aerospike Expression DSL library to your project and configuring it.
+This guide provides detailed instructions for adding the Aerospike Expression Language library to your project and configuring it.
 
 ## Prerequisites
 
@@ -10,7 +10,7 @@ This guide provides detailed instructions for adding the Aerospike Expression DS
 
 ## Library Installation
 
-To use the Expression DSL, you need to add this dependency to your project: `aerospike-expression-dsl`. Library versions prior to 0.3.0 had an additional dependency `aerospike-client-jdk8`.
+To use the Expression Language, you need to add this dependency to your project: `aerospike-expression-lang-java`. Library versions prior to 0.3.0 had an additional dependency `aerospike-client-jdk8`.
 
 ### Maven
 
@@ -18,10 +18,10 @@ Add the following dependencies to your `pom.xml` file:
 
 ```xml
 <dependencies>
-    <!-- The Expression DSL Library -->
+    <!-- The Expression Language Library -->
     <dependency>
         <groupId>com.aerospike</groupId>
-        <artifactId>aerospike-expression-dsl</artifactId>
+        <artifactId>aerospike-expression-lang-java</artifactId>
         <version>0.3.0</version>
     </dependency>
 </dependencies>
@@ -33,32 +33,32 @@ Add the following to your `build.gradle` file's `dependencies` block:
 
 ```groovy
 dependencies {
-    // The Expression DSL Library
-    implementation 'com.aerospike:aerospike-expression-dsl:0.3.0'
+    // The Expression Language Library
+    implementation 'com.aerospike:aerospike-expression-lang-java:0.3.0'
 }
 ```
 
 ## Initializing the Parser
 
-The main entry point for the library is the `DSLParser` interface. To get started, simply instantiate the default implementation:
+The main entry point for the library is the `AelParser` interface. To get started, simply instantiate the default implementation:
 
 ```java
-import com.aerospike.dsl.api.DSLParser;
-import com.aerospike.dsl.impl.DSLParserImpl;
+import com.aerospike.ael.api.AelParser;
+import com.aerospike.ael.impl.AelParserImpl;
 
 // Create a reusable parser instance
-DSLParser parser = new DSLParserImpl();
+AelParser parser = new AelParserImpl();
 ```
 
-This `parser` object is thread-safe and can be reused across your application to parse different DSL expression strings.
+This `parser` object is thread-safe and can be reused across your application to parse different AEL expression strings.
 
 ## Compatibility Table
 
-It is important to ensure the versions of the DSL library, Java client, and Aerospike Server are compatible.
+It is important to ensure the versions of the AEL library, Java client, and Aerospike Server are compatible.
 
 NOTE: Starting with version `0.3.0`, there is no dependency on Java client.
 
-| `aerospike-expression-dsl` | `aerospike-client-jdk8` | Aerospike Server |
+| `aerospike-expression-lang-java` | `aerospike-client-jdk8` | Aerospike Server |
 |:---------------------------|:------------------------|:-----------------|
 | 0.1.0                      | 8.0.0+                  | 5.7+             |
 | 0.2.0                      | 8.0.0+                  | 5.7+             |
@@ -68,7 +68,7 @@ NOTE: Starting with version `0.3.0`, there is no dependency on Java client.
 
 If you need to build the library from source, you will need to regenerate the ANTLR sources first. 
 
-The grammar file is located at `src/main/antlr4/com/aerospike/dsl/Condition.g4`.
+The grammar file is located at `src/main/antlr4/com/aerospike/ael/Condition.g4`.
 
 Run the following Maven command to re-generate the Java parser classes:
 

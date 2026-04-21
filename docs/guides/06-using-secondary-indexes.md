@@ -1,26 +1,26 @@
 # Guide: Automatic Secondary Index Optimization
 
-One of the most powerful features of the Expression DSL is its ability to automatically leverage accessible Aerospike secondary indexes (SI).
+One of the most powerful features of the Expression Language is its ability to automatically leverage accessible Aerospike secondary indexes (SI).
 
-When you provide the parser with a list of available indexes, it can analyze your DSL string and transform a part of it into a more performant secondary index filter.
+When you provide the parser with a list of available indexes, it can analyze your AEL string and transform a part of it into a more performant secondary index filter.
 
 ## Why is this important?
 
 *   **Performance**: A secondary index query is significantly faster than a full scan with a filter expression. An SI query allows the database to jump directly to the records that might match, whereas a filter expression requires the server to read every single record in the set and evaluate the expression against it.
-*   **Simplicity**: You don't need to manually decide which parts of your query should use an index. You can write a single, logical DSL string, and the parser will perform the optimization for you given that you 
+*   **Simplicity**: You don't need to manually decide which parts of your query should use an index. You can write a single, logical AEL string, and the parser will perform the optimization for you given that you 
 
 ## How it Works
 
 When you call `parser.parseExpression()`, you can optionally provide an `IndexContext`. This object tells the parser which namespace you are querying and which secondary indexes are available.
 
 The parser then does the following:
-1.  It analyzes the `and` components of your DSL expression if there are any.
+1.  It analyzes the `and` components of your AEL expression if there are any.
 2.  It compares each component against the list of available indexes.
 3.  If it finds a component that can be satisfied by a numeric or string range query on an indexed bin, it converts that component into an Aerospike secondary index `Filter` object.
 4.  It marks that component in order not to use it when building `Expression`.
-5.  The rest of the DSL string is converted into an `Expression`.
+5.  The rest of the AEL string is converted into an `Expression`.
 6.  The `ParseResult` then contains either one of the following entities or **both**:
-* `Filter` (for the SI query) - given that the correct `IndexContext` was provided, and that the given DSL expression can be converted to a secondary index filter
+* `Filter` (for the SI query) - given that the correct `IndexContext` was provided, and that the given AEL expression can be converted to a secondary index filter
 * `Expression` (for the scan expression filter)
 
 > **Note:** Only one secondary index can be used per query. The index will be chosen based on cardinality
@@ -117,8 +117,8 @@ First, you need to represent your available index in code.
 
 ```java
 import com.aerospike.client.query.IndexType;
-import com.aerospike.dsl.Index;
-import com.aerospike.dsl.IndexContext;
+import com.aerospike.ael.Index;
+import com.aerospike.ael.IndexContext;
 import java.util.List;
 
 // Describe the available secondary index
@@ -137,18 +137,18 @@ IndexContext indexContext = IndexContext.of("test", List.of(cityIndex));
 
 ### 2. Parse the Expression using IndexContext
 
-Now, provide the `indexContext` when you parse your DSL string.
+Now, provide the `indexContext` when you parse your AEL string.
 
-**DSL String:**
+**AEL String:**
 ```
 "$.city == 'New York' and $.age > 30"
 ```
 
 **Java Code:**
 ```java
-DSLParser parser = new DSLParserImpl();
-String dsl = "$.city == 'New York' and $.age > 30";
-ExpressionContext context = ExpressionContext.of(dsl);
+AelParser parser = new AelParserImpl();
+String ael = "$.city == 'New York' and $.age > 30";
+ExpressionContext context = ExpressionContext.of(ael);
 
 // Provide the IndexContext to enable using SI filter
 ParsedExpression parsed = parser.parseExpression(context, indexContext);
@@ -159,7 +159,7 @@ ParseResult result = parsed.getResult();
 ```java
 
 // 3. Extract Both Filter and Expression
-Filter siFilter = result.getFilter(); // This will be non-null if indexes are correct and DSL string input allows building SI filter, like in this example
+Filter siFilter = result.getFilter(); // This will be non-null if indexes are correct and AEL string input allows building SI filter, like in this example
 Expression filterExpression = Exp.build(result.getExp()); // This will contain the scan expression filter
 
 // The parser has split the query:
@@ -188,4 +188,4 @@ queryPolicy.filterExp = filterExpression;
 client.query(queryPolicy, stmt);
 ```
 
-By providing the `IndexContext`, you have allowed the DSL parser to transform a potentially slow scan into a fast, targeted query, without changing your original DSL logic.
+By providing the `IndexContext`, you have allowed the AEL parser to transform a potentially slow scan into a fast, targeted query, without changing your original AEL logic.

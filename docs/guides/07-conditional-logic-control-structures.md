@@ -1,6 +1,6 @@
 # Conditional Logic: Control Structures `let` and  `when`
 
-The Expression DSL supports conditional logic through `when` and `let` control structures, similar to a `CASE` statement in SQL. This allows you to build sophisticated expressions that can return different values based on a set of conditions.
+The Expression Language supports conditional logic through `when` and `let` control structures, similar to a `CASE` statement in SQL. This allows you to build sophisticated expressions that can return different values based on a set of conditions.
 
 This is particularly useful for server-side data transformation or implementing complex business rules.
 
@@ -31,9 +31,9 @@ Imagine you want to categorize users into different tiers based on their `rank` 
 *   If `rank` > 40, tier is "bronze"
 *   Otherwise, the tier is "basic"
 
-### DSL String
+### AEL String
 
-You can express this logic in a single DSL expression to verify a user's `tier`.
+You can express this logic in a single AEL expression to verify a user's `tier`.
 
 ```
 "$.tier == when($.rank > 90 => 'gold', $.rank > 70 => 'silver', $.rank > 40 => 'bronze', default => 'basic')"
@@ -44,12 +44,12 @@ Let's break this down:
 2.  The outer expression then becomes `$.tier == 'gold'`.
 3.  The entire expression will return `true` if the `tier` bin for that record is indeed set to "gold", and `false` otherwise.
 
-### Using Static DSL String in Java
+### Using Static AEL String in Java
 
 ```java
-String dslString = "$.tier == when($.rank > 90 => 'gold', $.rank > 70 => 'silver', $.rank > 40 => 'bronze', default => 'basic')";
+String aelString = "$.tier == when($.rank > 90 => 'gold', $.rank > 70 => 'silver', $.rank > 40 => 'bronze', default => 'basic')";
 
-ExpressionContext context = ExpressionContext.of(dslString);
+ExpressionContext context = ExpressionContext.of(aelString);
 ParsedExpression parsed = parser.parseExpression(context);
 Expression filter = Exp.build(parsed.getResult().getExp());
 
@@ -61,15 +61,15 @@ queryPolicy.filterExp = filter;
 // This query will now return only the records where the tier bin is correctly set according to the rank.
 ```
 
-### Using DSL String with Placeholders in Java
+### Using AEL String with Placeholders in Java
 
 We can also use placeholders within a `when` expression for greater flexibility. Placeholders mark the places where values provided separately are matched by indexes.
-This way the same DSL String can be used multiple times with different values for the same placeholders.
+This way the same AEL String can be used multiple times with different values for the same placeholders.
 
-For example, let's add placeholders to our previous DSL expression and use the same API for generating an `Expression`:
+For example, let's add placeholders to our previous AEL expression and use the same API for generating an `Expression`:
 
 ```java
-String dsl = "$.tier == when($.rank > ?0 => ?1, $.rank > ?2 => ?3, default => ?4)";
+String ael = "$.tier == when($.rank > ?0 => ?1, $.rank > ?2 => ?3, default => ?4)";
 
 PlaceholderValues values = PlaceholderValues.of(
         90, "gold",
@@ -78,7 +78,7 @@ PlaceholderValues values = PlaceholderValues.of(
         "basic"
 );
 
-ExpressionContext context = ExpressionContext.of(dsl, values);
+ExpressionContext context = ExpressionContext.of(ael, values);
 ParsedExpression parsed = parser.parseExpression(context);
 Expression filter = Exp.build(parsed.getResult().getExp());
 // ...
@@ -127,7 +127,7 @@ Imagine we want to calculate a user's eligibility score based on multiple factor
 *   Apply a multiplier based on credit score
 *   User qualifies if final score exceeds threshold
 
-### DSL String
+### AEL String
 
 We can use the `let` construct to make this complex calculation more readable and maintainable:
 
@@ -149,17 +149,17 @@ Let's break this down:
 5. The final expression checks if the `finalScore` is at least 75 and if `premiumEligible` is true
 
 
-### Using Static DSL String in Java
+### Using Static AEL String in Java
 
 ```java
-String dslString = "let (" +
+String aelString = "let (" +
         "baseScore = $.accountAgeMonths * 0.5, " +
         "transactionBonus = $.transactionCount > 100 ? 25 : 0, " +
         "creditMultiplier = $.creditScore > 700 ? 1.5 : 1.0, " +
         "finalScore = (${baseScore} + ${transactionBonus}) * ${creditMultiplier}" +
         ") then (${finalScore} >= 75 && $.premiumEligible == true)";
 
-ExpressionContext context = ExpressionContext.of(dslString);
+ExpressionContext context = ExpressionContext.of(aelString);
 ParsedExpression parsed = parser.parseExpression(context);
 Expression filter = Exp.build(parsed.getResult().getExp());
 
@@ -171,15 +171,15 @@ queryPolicy.filterExp = filter;
 // This query will return only records of users who qualify for premium service
 ```
 
-### Using DSL String with Placeholders in Java
+### Using AEL String with Placeholders in Java
 
 You can also use placeholders within a let expression for greater flexibility. Placeholders mark the places where values provided separately are matched by indexes.
-This way the same DSL String can be used multiple times with different values for the same placeholders.
+This way the same AEL String can be used multiple times with different values for the same placeholders.
 
-For example, let's add placeholders to our previous DSL expression and use the same API for generating an `Expression`:
+For example, let's add placeholders to our previous AEL expression and use the same API for generating an `Expression`:
 
 ```java
-String dsl = "let (" +
+String ael = "let (" +
         "baseScore = $.accountAgeMonths * ?0, " +
         "transactionThreshold = ?1, " +
         "transactionBonus = $.transactionCount > ${transactionThreshold} ? ?2 : 0, " +
@@ -197,7 +197,7 @@ PlaceholderValues values = PlaceholderValues.of(
         75      // Minimum score threshold
 );
 
-ExpressionContext context = ExpressionContext.of(dsl, values);
+ExpressionContext context = ExpressionContext.of(ael, values);
 ParsedExpression parsed = parser.parseExpression(context);
 Expression filter = Exp.build(parsed.getResult().getExp());
 // ...

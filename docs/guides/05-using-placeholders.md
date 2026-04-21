@@ -1,12 +1,12 @@
 # Guide: Using Placeholders for Security and Performance
 
-Placeholders allow you to create parameterized DSL expressions. Instead of embedding literal values directly into your DSL string, you use special markers (starting with `?`) that are replaced with actual values at runtime.
+Placeholders allow you to create parameterized AEL expressions. Instead of embedding literal values directly into your AEL string, you use special markers (starting with `?`) that are replaced with actual values at runtime.
 
-This practice is recommended due to performance enhancement. It allows the DSL parser to compile the expression *once* and reuse the result many times with different values, which is much faster than re-parsing the string for every query.
+This practice is recommended due to performance enhancement. It allows the AEL parser to compile the expression *once* and reuse the result many times with different values, which is much faster than re-parsing the string for every query.
 
 ## The Cost of Parsing
 
-When you provide the `DSLParser` with a string, it performs several steps:
+When you provide the `AelParser` with a string, it performs several steps:
 1.  **Lexing**: Breaks the string into a stream of tokens (e.g., `$.`, `age`, `>`, `100`).
 2.  **Parsing**: Builds an Abstract Syntax Tree (AST) representing the logical structure of the expression.
 3.  **Compilation**: Traverses the AST to create a template for the final result.
@@ -17,7 +17,7 @@ This process has a small but non-zero CPU cost. If you are parsing the same stri
 
 Placeholders are denoted by a question mark followed by a zero-based index: `?0`, `?1`, `?2`, and so on.
 
-**DSL String with Placeholders:**
+**AEL String with Placeholders:**
 ```
 "$.age > ?0 and $.city == ?1"
 ```
@@ -31,23 +31,23 @@ To use an expression with placeholders, you must provide the corresponding value
 ### Java Usage Example
 
 ```java
-import com.aerospike.dsl.ExpressionContext;
-import com.aerospike.dsl.PlaceholderValues;
-import com.aerospike.dsl.api.DSLParser;
-import com.aerospike.dsl.impl.DSLParserImpl;
+import com.aerospike.ael.ExpressionContext;
+import com.aerospike.ael.PlaceholderValues;
+import com.aerospike.ael.api.AelParser;
+import com.aerospike.ael.impl.AelParserImpl;
 // ... other imports
 
-DSLParser parser = new DSLParserImpl();
+AelParser parser = new AelParserImpl();
 
-// The DSL string with indexed placeholders
-String dsl = "$.age > ?0 and $.city == ?1";
+// The AEL string with indexed placeholders
+String ael = "$.age > ?0 and $.city == ?1";
 
 // Create a PlaceholderValues object with the values to substitute.
 // The order of values must match the placeholder indexes.
 PlaceholderValues values = PlaceholderValues.of(30, "New York");
 
 // Create the ExpressionContext
-ExpressionContext context = ExpressionContext.of(dsl, values);
+ExpressionContext context = ExpressionContext.of(ael, values);
 
 // Parse the expression
 ParsedExpression parsedExpression = parser.parseExpression(context);
@@ -65,12 +65,12 @@ The library automatically handles different data types for placeholders, includi
 
 **Example with different types:**
 ```
-String dsl = "$.lastLogin > ?0 and $.name == ?1";
+String ael = "$.lastLogin > ?0 and $.name == ?1";
 
 // Provide a Long for the timestamp and a String for the name
 PlaceholderValues values = PlaceholderValues.of(1672531200000L, "Alice");
 
-ExpressionContext context = ExpressionContext.of(dsl, values);
+ExpressionContext context = ExpressionContext.of(ael, values);
 // ...
 ```
 
@@ -84,9 +84,9 @@ Imagine an application that needs to query for users by age and city repeatedly.
 
 ```java
 // --- One-time setup ---
-DSLParser parser = new DSLParserImpl();
-String dsl = "$.age > ?0 and $.city == ?1";
-ExpressionContext initialContext = ExpressionContext.of(dsl); // No values needed at first
+AelParser parser = new AelParserImpl();
+String ael = "$.age > ?0 and $.city == ?1";
+ExpressionContext initialContext = ExpressionContext.of(ael); // No values needed at first
 
 // Parse the expression once and cache the result
 ParsedExpression cachedParsedExpression = parser.parseExpression(initialContext);
