@@ -73,7 +73,7 @@ class InNegativeTests {
     }
 
     @Test
-    void negMixedFloatAndStringInList() {
+    void negativeMixedFloatAndStringInList() {
         assertThatThrownBy(() -> parseFilterExp(
                 ExpressionContext.of("$.bin in [1.5, \"hello\"]")))
                 .isInstanceOf(AelParseException.class)
@@ -81,7 +81,7 @@ class InNegativeTests {
     }
 
     @Test
-    void negMixedIntAndFloatInList() {
+    void negativeMixedIntAndFloatInList() {
         assertThatThrownBy(() -> parseFilterExp(
                 ExpressionContext.of("$.bin in [1, 1.5]")))
                 .isInstanceOf(AelParseException.class)
@@ -89,7 +89,7 @@ class InNegativeTests {
     }
 
     @Test
-    void negPlaceholderResolvesToStr() {
+    void negativePlaceholderResolvesToStr() {
         assertThatThrownBy(() -> parseFilterExp(
                 ExpressionContext.of("$.name in ?0", PlaceholderValues.of("Bob"))))
                 .isInstanceOf(AelParseException.class)
@@ -97,7 +97,7 @@ class InNegativeTests {
     }
 
     @Test
-    void negPlaceholderResolvesToInt() {
+    void negativePlaceholderResolvesToInt() {
         assertThatThrownBy(() -> parseFilterExp(
                 ExpressionContext.of("$.name in ?0", PlaceholderValues.of(42))))
                 .isInstanceOf(AelParseException.class)

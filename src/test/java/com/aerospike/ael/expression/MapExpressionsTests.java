@@ -634,4 +634,28 @@ public class MapExpressionsTests {
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.a.get(type: INT, return: RANK) == 5"),
                 expected);
     }
+
+    // ---- Map value type contrast ----
+
+    @Test
+    void mapValueQuotedIntIsString() {
+        Exp expectedDQ = Exp.eq(
+                MapExp.getByValue(MapReturnType.VALUE,
+                        Exp.val("1"), Exp.mapBin("mapBin")),
+                Exp.val("x"));
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.mapBin.{=\"1\"}.get(type: STRING) == \"x\""), expectedDQ);
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.mapBin.{='1'}.get(type: STRING) == 'x'"), expectedDQ);
+    }
+
+    @Test
+    void mapValueUnquotedIntIsInt() {
+        Exp expected = Exp.eq(
+                MapExp.getByValue(MapReturnType.VALUE,
+                        Exp.val(1), Exp.mapBin("mapBin")),
+                Exp.val(10));
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.mapBin.{=1} == 10"), expected);
+    }
 }

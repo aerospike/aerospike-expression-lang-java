@@ -17,10 +17,13 @@ public class MapIndexRangeRelative extends MapPart {
     private final boolean isInverted;
     private final Integer start;
     private final Integer count;
-    private final String relative;
+    private final Object relative;
 
-    public MapIndexRangeRelative(boolean isInverted, Integer start, Integer end, String relative) {
+    public MapIndexRangeRelative(boolean isInverted, Integer start, Integer end, Object relative) {
         super(MapPartType.INDEX_RANGE_RELATIVE);
+        if (relative != null) {
+            requireStringOrLong(relative, "MapIndexRangeRelative");
+        }
         this.isInverted = isInverted;
         this.start = start;
         this.count = subtractNullable(end, start);
@@ -43,7 +46,7 @@ public class MapIndexRangeRelative extends MapPart {
                 end = parseSignedInt(range.relativeKeyEnd().end().signedInt());
             }
 
-            String relativeKey = null;
+            Object relativeKey = null;
             if (range.relativeKeyEnd().mapKey() != null) {
                 relativeKey = ParsingUtils.parseMapKey(range.relativeKeyEnd().mapKey());
             }
@@ -58,7 +61,7 @@ public class MapIndexRangeRelative extends MapPart {
             cdtReturnType = cdtReturnType | MapReturnType.INVERTED;
         }
 
-        Exp keyExp = Exp.val(relative);
+        Exp keyExp = ParsingUtils.objectToExp(relative);
         Exp startExp = Exp.val(start);
         if (count == null) {
             return MapExp.getByKeyRelativeIndexRange(cdtReturnType, keyExp, startExp,

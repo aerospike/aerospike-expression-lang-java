@@ -14,11 +14,15 @@ import java.util.Optional;
 
 public class MapKeyRange extends MapPart {
     private final boolean isInverted;
-    private final String start;
-    private final String end;
+    private final Object start;
+    private final Object end;
 
-    public MapKeyRange(boolean isInverted, String start, String end) {
+    public MapKeyRange(boolean isInverted, Object start, Object end) {
         super(MapPartType.KEY_RANGE);
+        requireStringOrLong(start, "MapKeyRange start");
+        if (end != null) {
+            requireStringOrLong(end, "MapKeyRange end");
+        }
         this.isInverted = isInverted;
         this.start = start;
         this.end = end;
@@ -33,9 +37,9 @@ public class MapKeyRange extends MapPart {
                     keyRange != null ? keyRange.keyRangeIdentifier() : invertedKeyRange.keyRangeIdentifier();
             boolean isInverted = keyRange == null;
 
-            String startKey = ParsingUtils.parseMapKey(range.mapKey(0));
+            Object startKey = ParsingUtils.parseMapKey(range.mapKey(0));
 
-            String endKey = Optional.ofNullable(range.mapKey(1))
+            Object endKey = Optional.ofNullable(range.mapKey(1))
                     .map(ParsingUtils::parseMapKey)
                     .orElse(null);
 
@@ -50,8 +54,8 @@ public class MapKeyRange extends MapPart {
             cdtReturnType = cdtReturnType | MapReturnType.INVERTED;
         }
 
-        Exp startExp = Exp.val(start);
-        Exp endExp = end != null ? Exp.val(end) : null;
+        Exp startExp = ParsingUtils.objectToExp(start);
+        Exp endExp = end != null ? ParsingUtils.objectToExp(end) : null;
 
         return MapExp.getByKeyRange(cdtReturnType, startExp, endExp, Exp.bin(basePath.getBinPart().getBinName(),
                 basePath.getBinType()), context);

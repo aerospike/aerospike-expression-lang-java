@@ -118,18 +118,38 @@ public class ParsingUtils {
     }
 
     /**
-     * Extracts the text content from a {@code mapKey} parser rule context.
-     * Handles NAME_IDENTIFIER, QUOTED_STRING, and IN keyword (as literal text).
+     * Extracts a typed value from a {@code mapKey} parser rule context.
+     * Returns {@link Long} for pure decimal INT tokens, {@link String} for hex/binary INT tokens,
+     * and {@link String} for NAME_IDENTIFIER, QUOTED_STRING, and IN keyword.
      *
      * @param ctx The mapKey context from the parser
-     * @return The parsed key string
+     * @return The parsed key as String or Long
      */
-    public static String parseMapKey(ConditionParser.MapKeyContext ctx) {
+    public static Object parseMapKey(ConditionParser.MapKeyContext ctx) {
         String result = resolveStringToken(ctx);
         if (result != null) {
             return result;
         }
+        TerminalNode intToken = ctx.getToken(ConditionParser.INT, 0);
+        if (intToken != null) {
+            String intText = intToken.getText();
+            if (isHexOrBinaryIntToken(intText)) {
+                return intText;
+            }
+            return parseLongMapKey(intText);
+        }
         throw new AelParseException("Could not parse mapKey from ctx: %s".formatted(ctx.getText()));
+    }
+
+    /**
+     * Parses a decimal digit string as a long map key, wrapping overflow in {@link AelParseException}.
+     */
+    public static long parseLongMapKey(String text) {
+        try {
+            return Long.parseLong(text);
+        } catch (NumberFormatException e) {
+            throw new AelParseException("Integer map key out of range: " + text, e);
+        }
     }
 
     /**
@@ -202,8 +222,7 @@ public class ParsingUtils {
 
     /**
      * Converts a parsed value object to an {@link Exp} value expression.
-     * Supports the types produced by {@link #parseValueIdentifier}: {@link String}, {@link Integer},
-     * and {@code byte[]}.
+     * Supports {@link String}, {@link Long}, {@link Integer}, and {@code byte[]}.
      *
      * @param value The parsed value object
      * @return The corresponding {@link Exp} value expression
@@ -211,6 +230,7 @@ public class ParsingUtils {
      */
     public static Exp objectToExp(Object value) {
         if (value instanceof String s) return Exp.val(s);
+        if (value instanceof Long l) return Exp.val(l);
         if (value instanceof Integer i) return Exp.val(i);
         if (value instanceof byte[] b) return Exp.val(b);
         throw new AelParseException(

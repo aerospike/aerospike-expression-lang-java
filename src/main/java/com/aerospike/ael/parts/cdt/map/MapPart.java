@@ -1,5 +1,6 @@
 package com.aerospike.ael.parts.cdt.map;
 
+import com.aerospike.ael.AelParseException;
 import com.aerospike.ael.client.cdt.MapReturnType;
 import com.aerospike.ael.parts.cdt.CdtPart;
 import com.aerospike.ael.parts.path.PathFunction;
@@ -30,6 +31,13 @@ public abstract class MapPart extends CdtPart {
             case REVERSE_INDEX -> MapReturnType.REVERSE_INDEX;
             case REVERSE_RANK -> MapReturnType.REVERSE_RANK;
         };
+    }
+
+    static void requireStringOrLong(Object key, String context) {
+        if (!(key instanceof String) && !(key instanceof Long)) {
+            throw new AelParseException(
+                    "Unsupported map key type in %s: %s".formatted(context, key.getClass().getSimpleName()));
+        }
     }
 
     public enum MapPartType {

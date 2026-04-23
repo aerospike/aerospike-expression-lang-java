@@ -496,4 +496,28 @@ class ListExpressionsTests {
         // Implicit detect as INT
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[0].get(return: INDEX) == 1"), expected);
     }
+
+    // ---- List value type contrast ----
+
+    @Test
+    void listValueQuotedIntIsString() {
+        Exp expectedDQ = Exp.eq(
+                ListExp.getByValue(ListReturnType.VALUE,
+                        Exp.val("1"), Exp.listBin("listBin")),
+                Exp.val("x"));
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.listBin.[=\"1\"].get(type: STRING) == \"x\""), expectedDQ);
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.listBin.[='1'].get(type: STRING) == 'x'"), expectedDQ);
+    }
+
+    @Test
+    void listValueUnquotedIntIsInt() {
+        Exp expected = Exp.eq(
+                ListExp.getByValue(ListReturnType.VALUE,
+                        Exp.val(1), Exp.listBin("listBin")),
+                Exp.val(10));
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.listBin.[=1] == 10"), expected);
+    }
 }

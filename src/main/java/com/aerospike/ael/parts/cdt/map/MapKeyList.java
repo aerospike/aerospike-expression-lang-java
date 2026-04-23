@@ -14,10 +14,11 @@ import java.util.List;
 
 public class MapKeyList extends MapPart {
     private final boolean isInverted;
-    private final List<String> keyList;
+    private final List<Object> keyList;
 
-    public MapKeyList(boolean isInverted, List<String> keyList) {
+    public MapKeyList(boolean isInverted, List<Object> keyList) {
         super(MapPartType.KEY_LIST);
+        keyList.forEach(k -> requireStringOrLong(k, "MapKeyList"));
         this.isInverted = isInverted;
         this.keyList = keyList;
     }
@@ -31,11 +32,11 @@ public class MapKeyList extends MapPart {
                     keyList != null ? keyList.keyListIdentifier() : invertedKeyList.keyListIdentifier();
             boolean isInverted = keyList == null;
 
-            List<String> keyListStrings = list.mapKey().stream()
+            List<Object> keyListValues = list.mapKey().stream()
                     .map(ParsingUtils::parseMapKey)
                     .toList();
 
-            return new MapKeyList(isInverted, keyListStrings);
+            return new MapKeyList(isInverted, keyListValues);
         }
         throw new AelParseException("Could not translate MapKeyList from ctx: %s".formatted(ctx));
     }
