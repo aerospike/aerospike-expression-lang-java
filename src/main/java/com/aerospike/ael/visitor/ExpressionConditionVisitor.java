@@ -805,6 +805,11 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
     }
 
     @Override
+    public AbstractPart visitPathFunctionExists(ConditionParser.PathFunctionExistsContext ctx) {
+        return new PathFunction(PathFunction.PathFunctionType.EXISTS, PathFunction.ReturnParam.EXISTS, null);
+    }
+
+    @Override
     public AbstractPart visitPathFunctionCast(ConditionParser.PathFunctionCastContext ctx) {
         String typeVal = extractTypeFromMethod(ctx.PATH_FUNCTION_CAST().getText());
         PathFunction.CastType castType = PathFunction.CastType.valueOf(typeVal.toUpperCase());
@@ -1069,6 +1074,13 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
         BasePath basePath = (BasePath) visit(ctx.basePath());
         PathFunction pathFunction = visitPathFunctionIfPresent(ctx);
 
+        if (pathFunction != null && pathFunction.getPathFunctionType() == PathFunction.PathFunctionType.EXISTS) {
+            if (basePath.getCdtParts().isEmpty()) {
+                return buildBinExists(basePath.getBinPart());
+            }
+            return buildCdtExists(basePath, pathFunction);
+        }
+
         if (!basePath.getCdtParts().isEmpty()
                 || pathFunction != null && pathFunction.getPathFunctionType() == PathFunction.PathFunctionType.COUNT) {
             return new Path(basePath, pathFunction);
@@ -1084,6 +1096,15 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
 
     private PathFunction visitPathFunctionIfPresent(ConditionParser.PathContext ctx) {
         return ctx.pathFunction() != null ? (PathFunction) visit(ctx.pathFunction()) : null;
+    }
+
+    private AbstractPart buildBinExists(BinPart binPart) {
+        return new ExpressionContainer(binPart, ExpressionContainer.ExprPartsOperation.EXISTS);
+    }
+
+    private AbstractPart buildCdtExists(BasePath basePath, PathFunction pathFunction) {
+        return new ExpressionContainer(
+                new Path(basePath, pathFunction), ExpressionContainer.ExprPartsOperation.EXISTS);
     }
 
     private AbstractPart buildBinCast(BinPart binPart, PathFunction pathFunction) {

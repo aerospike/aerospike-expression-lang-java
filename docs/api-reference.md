@@ -78,6 +78,25 @@ Represents an available secondary index for optimization.
     * Must be non-negative (`>= 0`).
     * Providing a realistic, non-negative cardinality value is recommended for better automatic index selection (indexes with higher `binValuesRatio` are preferred).
 
+## Path Functions
+
+Path functions are suffixed to a bin or CDT path with dot notation.
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `get()` | Retrieve a value (default if omitted). Accepts optional `type` and `return` params. | `$.mapBin.key.get(type: INT)` |
+| `count()` | Count elements in a CDT bin or at a CDT path. | `$.listBin.count() > 5` |
+| `exists()` | Return `true` if a bin or CDT element exists, `false` otherwise. | `$.myBin.exists()` |
+| `asInt()` / `asFloat()` | Cast a CDT element value to int or float. | `$.listBin.[0].asInt()` |
+
+### `exists()` Details
+
+**Bin-level:** `$.binName.exists()` returns a boolean predicate checking whether the bin is present in the record.
+
+**CDT-level:** `$.mapBin.key.exists()` or `$.listBin.[0].exists()` checks whether the specified element exists within the CDT structure.
+
+`exists()` can be used standalone, in logical expressions (`and`, `or`, `not`), or as a condition in `when` expressions.
+
 ## Example API Flow
 
 Here is a recap of how the classes work together in a typical use case:

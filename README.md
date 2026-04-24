@@ -81,6 +81,18 @@ Expression expectedExp = Exp.build(
 assertEquals(actualExp, expectedExp);
 ```
 
+### Checking bin or element existence
+
+```java
+// Check if a bin exists
+Exp exp1 = parser.parseExpression(ExpressionContext.of("$.myBin.exists()")).getResult().getExp();
+
+// Check if a map key exists, combined with another condition
+Exp exp2 = parser.parseExpression(
+        ExpressionContext.of("$.config.featureFlag.exists() and $.status == 1")
+).getResult().getExp();
+```
+
 ### Getting secondary index filter
 
 ```java

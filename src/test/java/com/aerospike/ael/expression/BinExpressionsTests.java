@@ -71,9 +71,4 @@ class BinExpressionsTests {
                 .hasMessageContaining("at character 15");
     }
 
-    // TODO: Will be handled in FMWK-486
-    //@Test
-    //void logicalOperators_functionCalls() {
-    //    translate("$.a.exists() and $.b.exists()");
-    //}
 }
