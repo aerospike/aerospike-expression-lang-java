@@ -511,6 +511,98 @@ public class MapExpressionsTests {
     }
 
     @Test
+    void mapValueRangeStrUnquoted() {
+        Exp expected = MapExp.getByValueRange(
+                MapReturnType.VALUE,
+                Exp.val("aaa"),
+                Exp.val("zzz"),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=aaa:zzz}"), expected);
+    }
+
+    @Test
+    void mapValueRangeStrSingleQuoted() {
+        Exp expected = MapExp.getByValueRange(
+                MapReturnType.VALUE,
+                Exp.val("hello"),
+                Exp.val("world"),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{='hello':'world'}"), expected);
+    }
+
+    @Test
+    void mapValueRangeStrDoubleQuoted() {
+        Exp expected = MapExp.getByValueRange(
+                MapReturnType.VALUE,
+                Exp.val("hello"),
+                Exp.val("world"),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=\"hello\":\"world\"}"), expected);
+    }
+
+    @Test
+    void mapValueRangeStrOpenEnded() {
+        Exp expected = MapExp.getByValueRange(
+                MapReturnType.VALUE,
+                Exp.val("hello"),
+                null,
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{='hello':}"), expected);
+    }
+
+    @Test
+    void mapValueRangeStrInverted() {
+        Exp expected = MapExp.getByValueRange(
+                MapReturnType.VALUE | MapReturnType.INVERTED,
+                Exp.val("hello"),
+                Exp.val("world"),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{!='hello':'world'}"), expected);
+    }
+
+    @Test
+    void mapValueRangeMixedTypes() {
+        Exp expected = MapExp.getByValueRange(
+                MapReturnType.VALUE,
+                Exp.val("abc"),
+                Exp.val(999),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=abc:999}"), expected);
+    }
+
+    @Test
+    void mapValueRangeBlob() {
+        Exp expected = MapExp.getByValueRange(
+                MapReturnType.VALUE,
+                Exp.val(new byte[]{0x0A}),
+                Exp.val(new byte[]{(byte) 0xFF}),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=X'0A':X'FF'}"), expected);
+    }
+
+    @Test
+    void mapValueRangeBlobB64() {
+        byte[] start = java.util.Base64.getDecoder().decode("AAAA");
+        byte[] end = java.util.Base64.getDecoder().decode("////");
+        Exp expected = MapExp.getByValueRange(
+                MapReturnType.VALUE,
+                Exp.val(start),
+                Exp.val(end),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=b64'AAAA':b64'////'}"), expected);
+    }
+
+    @Test
+    void mapValueRangeInKeyword() {
+        Exp expected = MapExp.getByValueRange(
+                MapReturnType.VALUE,
+                Exp.val("in"),
+                Exp.val("out"),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=in:out}"), expected);
+    }
+
+    @Test
     void mapRankRange() {
         Exp expected = MapExp.getByRankRange(
                 MapReturnType.VALUE,

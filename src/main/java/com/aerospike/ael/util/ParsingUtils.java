@@ -204,23 +204,6 @@ public class ParsingUtils {
     }
 
     /**
-     * Parses a {@code valueIdentifier} context and requires the result to be an {@link Integer}.
-     * Used by value-range elements where only integer operands are valid.
-     *
-     * @param ctx The valueIdentifier context from the parser
-     * @return The parsed integer value
-     * @throws AelParseException if the parsed value is not an integer
-     */
-    public static Integer requireIntValueIdentifier(ConditionParser.ValueIdentifierContext ctx) {
-        Object result = parseValueIdentifier(ctx);
-        if (result instanceof Integer intValue) {
-            return intValue;
-        }
-        throw new AelParseException(
-                "Value range requires integer operands, got: %s".formatted(ctx.getText()));
-    }
-
-    /**
      * Converts a parsed value object to an {@link Exp} value expression.
      * Supports {@link String}, {@link Long}, {@link Integer}, and {@code byte[]}.
      *
@@ -235,6 +218,24 @@ public class ParsingUtils {
         if (value instanceof byte[] b) return Exp.val(b);
         throw new AelParseException(
                 "Unsupported value type for Exp conversion: " + value.getClass().getSimpleName());
+    }
+
+    /**
+     * Validates that a value is a supported type for {@link #objectToExp}: String, Integer, Long, or byte[].
+     *
+     * @param value   The value to check
+     * @param context Description for the error message (e.g. "MapValueRange start")
+     * @throws AelParseException if value is null or not a supported type
+     */
+    public static void requireSupportedExpValue(Object value, String context) {
+        if (value == null) {
+            throw new AelParseException("Null value in %s".formatted(context));
+        }
+        if (!(value instanceof String) && !(value instanceof Integer)
+                && !(value instanceof Long) && !(value instanceof byte[])) {
+            throw new AelParseException(
+                    "Unsupported value type in %s: %s".formatted(context, value.getClass().getSimpleName()));
+        }
     }
 
     /**

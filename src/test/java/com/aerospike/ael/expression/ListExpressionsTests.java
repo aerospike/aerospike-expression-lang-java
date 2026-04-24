@@ -402,6 +402,98 @@ class ListExpressionsTests {
     }
 
     @Test
+    void listValueRangeStrUnquoted() {
+        Exp expected = ListExp.getByValueRange(
+                ListReturnType.VALUE,
+                Exp.val("aaa"),
+                Exp.val("zzz"),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[=aaa:zzz]"), expected);
+    }
+
+    @Test
+    void listValueRangeStrSingleQuoted() {
+        Exp expected = ListExp.getByValueRange(
+                ListReturnType.VALUE,
+                Exp.val("hello"),
+                Exp.val("world"),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[='hello':'world']"), expected);
+    }
+
+    @Test
+    void listValueRangeStrDoubleQuoted() {
+        Exp expected = ListExp.getByValueRange(
+                ListReturnType.VALUE,
+                Exp.val("hello"),
+                Exp.val("world"),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[=\"hello\":\"world\"]"), expected);
+    }
+
+    @Test
+    void listValueRangeStrOpenEnded() {
+        Exp expected = ListExp.getByValueRange(
+                ListReturnType.VALUE,
+                Exp.val("hello"),
+                null,
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[='hello':]"), expected);
+    }
+
+    @Test
+    void listValueRangeStrInverted() {
+        Exp expected = ListExp.getByValueRange(
+                ListReturnType.VALUE | ListReturnType.INVERTED,
+                Exp.val("hello"),
+                Exp.val("world"),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[!='hello':'world']"), expected);
+    }
+
+    @Test
+    void listValueRangeMixedTypes() {
+        Exp expected = ListExp.getByValueRange(
+                ListReturnType.VALUE,
+                Exp.val("abc"),
+                Exp.val(999),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[=abc:999]"), expected);
+    }
+
+    @Test
+    void listValueRangeBlob() {
+        Exp expected = ListExp.getByValueRange(
+                ListReturnType.VALUE,
+                Exp.val(new byte[]{0x0A}),
+                Exp.val(new byte[]{(byte) 0xFF}),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[=X'0A':X'FF']"), expected);
+    }
+
+    @Test
+    void listValueRangeBlobB64() {
+        byte[] start = java.util.Base64.getDecoder().decode("AAAA");
+        byte[] end = java.util.Base64.getDecoder().decode("////");
+        Exp expected = ListExp.getByValueRange(
+                ListReturnType.VALUE,
+                Exp.val(start),
+                Exp.val(end),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[=b64'AAAA':b64'////']"), expected);
+    }
+
+    @Test
+    void listValueRangeInKeyword() {
+        Exp expected = ListExp.getByValueRange(
+                ListReturnType.VALUE,
+                Exp.val("in"),
+                Exp.val("out"),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[=in:out]"), expected);
+    }
+
+    @Test
     void listRankRange() {
         Exp expected = ListExp.getByRankRange(
                 ListReturnType.VALUE,
