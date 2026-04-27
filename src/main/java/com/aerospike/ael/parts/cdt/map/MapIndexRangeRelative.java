@@ -22,7 +22,7 @@ public class MapIndexRangeRelative extends MapPart {
     public MapIndexRangeRelative(boolean isInverted, Integer start, Integer end, Object relative) {
         super(MapPartType.INDEX_RANGE_RELATIVE);
         if (relative != null) {
-            requireStringOrLong(relative, "MapIndexRangeRelative");
+            requireSupportedKeyType(relative, "MapIndexRangeRelative");
         }
         this.isInverted = isInverted;
         this.start = start;

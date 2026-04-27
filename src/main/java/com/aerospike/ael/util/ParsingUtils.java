@@ -123,7 +123,7 @@ public class ParsingUtils {
      * and {@link String} for NAME_IDENTIFIER, QUOTED_STRING, and IN keyword.
      *
      * @param ctx The mapKey context from the parser
-     * @return The parsed key as String or Long
+     * @return The parsed key as String, Long, or byte[]
      */
     public static Object parseMapKey(ConditionParser.MapKeyContext ctx) {
         String result = resolveStringToken(ctx);
@@ -137,6 +137,14 @@ public class ParsingUtils {
                 return intText;
             }
             return parseLongMapKey(intText);
+        }
+        TerminalNode blobLiteral = ctx.getToken(ConditionParser.BLOB_LITERAL, 0);
+        if (blobLiteral != null) {
+            return parseHexToBytes(blobLiteral.getText());
+        }
+        TerminalNode b64Literal = ctx.getToken(ConditionParser.B64_LITERAL, 0);
+        if (b64Literal != null) {
+            return parseB64ToBytes(b64Literal.getText());
         }
         throw new AelParseException("Could not parse mapKey from ctx: %s".formatted(ctx.getText()));
     }

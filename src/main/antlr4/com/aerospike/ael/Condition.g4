@@ -283,6 +283,8 @@ mapKey
     | QUOTED_STRING
     | IN
     | INT
+    | BLOB_LITERAL
+    | B64_LITERAL
     ;
 
 mapValue: '{=' valueIdentifier '}';

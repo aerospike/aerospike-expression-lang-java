@@ -33,8 +33,8 @@ public abstract class MapPart extends CdtPart {
         };
     }
 
-    static void requireStringOrLong(Object key, String context) {
-        if (!(key instanceof String) && !(key instanceof Long)) {
+    static void requireSupportedKeyType(Object key, String context) {
+        if (!(key instanceof String) && !(key instanceof Long) && !(key instanceof byte[])) {
             throw new AelParseException(
                     "Unsupported map key type in %s: %s".formatted(context, key.getClass().getSimpleName()));
         }

@@ -266,4 +266,30 @@ class CtxTests {
         parseCtxAndCompareAsBase64("$.bin.007",
                 new CTX[]{CTX.mapKey(Value.get(7L))});
     }
+
+    @Test
+    void ctxHexBlobMapKey() {
+        parseCtxAndCompareAsBase64("$.bin.X'ff00'",
+                new CTX[]{CTX.mapKey(Value.get(new byte[]{(byte) 0xff, 0x00}))});
+    }
+
+    @Test
+    void ctxB64BlobMapKey() {
+        parseCtxAndCompareAsBase64("$.bin.b64'AQID'",
+                new CTX[]{CTX.mapKey(Value.get(new byte[]{1, 2, 3}))});
+    }
+
+    @Test
+    void ctxMixedWithBlobMapKey() {
+        parseCtxAndCompareAsBase64("$.bin.X'ff'.key.-1",
+                new CTX[]{CTX.mapKey(Value.get(new byte[]{(byte) 0xff})),
+                        CTX.mapKey(Value.get("key")), CTX.mapKey(Value.get(-1L))});
+    }
+
+    @Test
+    void ctxBlobKeyWithMapIndex() {
+        parseCtxAndCompareAsBase64("$.bin.X'aa'.{0}",
+                new CTX[]{CTX.mapKey(Value.get(new byte[]{(byte) 0xaa})),
+                        CTX.mapIndex(0)});
+    }
 }
