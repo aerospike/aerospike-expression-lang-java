@@ -526,7 +526,7 @@ class ListExpressionsTests {
     }
 
     @Test
-    void listValueRangeBlobB64() {
+    void listValueRangeBase64Blob() {
         byte[] start = java.util.Base64.getDecoder().decode("AAAA");
         byte[] end = java.util.Base64.getDecoder().decode("////");
         Exp expected = ListExp.getByValueRange(
@@ -545,6 +545,32 @@ class ListExpressionsTests {
                 Exp.val("out"),
                 Exp.listBin("listBin1"));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[=in:out]"), expected);
+    }
+
+    @Test
+    void negListValueRangeFloat() {
+        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.listBin1.[=1.5:2.5]")))
+                .isInstanceOf(AelParseException.class);
+    }
+
+    @Test
+    void negListValueRangeBoolean() {
+        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.listBin1.[=true:false]")))
+                .isInstanceOf(AelParseException.class);
+    }
+
+    @Test
+    void negListValueRangeOddHexBlob() {
+        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.listBin1.[=X'f':X'ff']")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("even number of hex characters");
+    }
+
+    @Test
+    void negListValueRangeInvalidB64() {
+        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.listBin1.[=b64'A':b64'AQID']")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("Base64 BLOB literal contains invalid Base64 content");
     }
 
     @Test

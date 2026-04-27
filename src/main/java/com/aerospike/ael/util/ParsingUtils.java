@@ -16,6 +16,8 @@ public class ParsingUtils {
     private static final BigInteger LONG_MIN_ABS = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE);
     private static final BigInteger INT_MIN_VALUE = BigInteger.valueOf(Integer.MIN_VALUE);
     private static final BigInteger INT_MAX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
+    private static final BigInteger LONG_MIN_VALUE = BigInteger.valueOf(Long.MIN_VALUE);
+    private static final BigInteger LONG_MAX_VALUE = BigInteger.valueOf(Long.MAX_VALUE);
 
     /**
      * Extracts a signed integer value from a {@code signedInt} parser rule context.
@@ -35,6 +37,25 @@ public class ParsingUtils {
             throw new AelParseException("Signed integer literal out of range for INT: " + ctx.getText());
         }
         return signedValue.intValue();
+    }
+
+    /**
+     * Extracts a signed long value from a {@code signedInt} parser rule context.
+     * Same grammar rule as {@link #parseSignedInt} ({@code signedInt: '-'? INT;}),
+     * but validates against the full 64-bit signed range.
+     *
+     * @param ctx The signedInt context from the parser
+     * @return The parsed long value, negated if a '-' prefix is present
+     */
+    public static long parseSignedLong(ConditionParser.SignedIntContext ctx) {
+        String intText = ctx.INT().getText();
+        boolean isNegative = ctx.getText().startsWith("-");
+        BigInteger value = parseUnsignedIntegerLiteral(intText);
+        BigInteger signedValue = isNegative ? value.negate() : value;
+        if (signedValue.compareTo(LONG_MIN_VALUE) < 0 || signedValue.compareTo(LONG_MAX_VALUE) > 0) {
+            throw new AelParseException("Signed integer literal out of range for LONG: " + ctx.getText());
+        }
+        return signedValue.longValue();
     }
 
     /**
@@ -136,10 +157,11 @@ public class ParsingUtils {
 
     /**
      * Extracts a typed value from a {@code valueIdentifier} parser rule context.
-     * Handles NAME_IDENTIFIER, QUOTED_STRING, IN keyword (as literal text), and signedInt.
+     * Handles NAME_IDENTIFIER, QUOTED_STRING, IN keyword (as literal text), signedInt,
+     * BLOB_LITERAL, and B64_LITERAL.
      *
      * @param ctx The valueIdentifier context from the parser
-     * @return The parsed value as String or Integer
+     * @return The parsed value as String, Long, or byte[]
      */
     public static Object parseValueIdentifier(ConditionParser.ValueIdentifierContext ctx) {
         String result = resolveStringToken(ctx);
@@ -147,7 +169,7 @@ public class ParsingUtils {
             return result;
         }
         if (ctx.signedInt() != null) {
-            return parseSignedInt(ctx.signedInt());
+            return parseSignedLong(ctx.signedInt());
         }
         TerminalNode blobLiteral = ctx.getToken(ConditionParser.BLOB_LITERAL, 0);
         if (blobLiteral != null) {
@@ -186,17 +208,20 @@ public class ParsingUtils {
     }
 
     /**
-     * Parses a {@code valueIdentifier} context and requires the result to be an {@link Integer}.
-     * Used by value-range elements where only integer operands are valid.
+     * Parses a {@code valueIdentifier} context and requires the result to be an integer ({@link Long}).
+     * <p>
+     * Note: currently unused — value-range elements now accept any type supported by
+     * {@link #objectToExp}. Retained for potential future use.
      *
      * @param ctx The valueIdentifier context from the parser
-     * @return The parsed integer value
+     * @return The parsed long value
      * @throws AelParseException if the parsed value is not an integer
      */
-    public static Integer requireIntValueIdentifier(ConditionParser.ValueIdentifierContext ctx) {
+    @SuppressWarnings("unused")
+    public static long requireIntValueIdentifier(ConditionParser.ValueIdentifierContext ctx) {
         Object result = parseValueIdentifier(ctx);
-        if (result instanceof Integer intValue) {
-            return intValue;
+        if (result instanceof Long longValue) {
+            return longValue;
         }
         throw new AelParseException(
                 "Value range requires integer operands, got: %s".formatted(ctx.getText()));
@@ -208,9 +233,13 @@ public class ParsingUtils {
      *
      * @param value The parsed value object
      * @return The corresponding {@link Exp} value expression
-     * @throws AelParseException if the value type is not supported
+     * @throws AelParseException if the value is null or its type is not supported
+     * @see #isSupportedExpType(Object)
      */
     public static Exp objectToExp(Object value) {
+        if (value == null) {
+            throw new AelParseException("Cannot convert null to Exp");
+        }
         if (value instanceof String s) return Exp.val(s);
         if (value instanceof Long l) return Exp.val(l);
         if (value instanceof Integer i) return Exp.val(i);
@@ -220,18 +249,31 @@ public class ParsingUtils {
     }
 
     /**
-     * Validates that a value is a supported type for {@link #objectToExp}: String, Integer, Long, or byte[].
+     * Checks whether a value is one of the types supported by {@link #objectToExp}:
+     * {@link String}, {@link Integer}, {@link Long}, or {@code byte[]}.
+     */
+    private static boolean isSupportedExpType(Object value) {
+        return value instanceof String || value instanceof Integer
+                || value instanceof Long || value instanceof byte[];
+    }
+
+    /**
+     * Validates that a value is a supported type for {@link #objectToExp}.
+     * <p>
+     * Accepts {@link String}, {@link Integer}, {@link Long}, and {@code byte[]}.
+     * Both {@link #parseValueIdentifier} and {@link #parseMapKey} return {@link Long} for
+     * numeric values; {@link Integer} is kept for robustness when values are constructed directly.
      *
      * @param value   The value to check
      * @param context Description for the error message (e.g. "MapValueRange start")
      * @throws AelParseException if value is null or not a supported type
+     * @see #isSupportedExpType(Object)
      */
     public static void requireSupportedExpValue(Object value, String context) {
         if (value == null) {
             throw new AelParseException("Null value in %s".formatted(context));
         }
-        if (!(value instanceof String) && !(value instanceof Integer)
-                && !(value instanceof Long) && !(value instanceof byte[])) {
+        if (!isSupportedExpType(value)) {
             throw new AelParseException(
                     "Unsupported value type in %s: %s".formatted(context, value.getClass().getSimpleName()));
         }

@@ -635,7 +635,7 @@ public class MapExpressionsTests {
     }
 
     @Test
-    void mapValueRangeBlobB64() {
+    void mapValueRangeBase64Blob() {
         byte[] start = java.util.Base64.getDecoder().decode("AAAA");
         byte[] end = java.util.Base64.getDecoder().decode("////");
         Exp expected = MapExp.getByValueRange(
@@ -654,6 +654,32 @@ public class MapExpressionsTests {
                 Exp.val("out"),
                 Exp.mapBin("mapBin1"));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=in:out}"), expected);
+    }
+
+    @Test
+    void negMapValueRangeFloat() {
+        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{=1.5:2.5}")))
+                .isInstanceOf(AelParseException.class);
+    }
+
+    @Test
+    void negMapValueRangeBoolean() {
+        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{=true:false}")))
+                .isInstanceOf(AelParseException.class);
+    }
+
+    @Test
+    void negMapValueRangeOddHexBlob() {
+        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{=X'f':X'ff'}")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("even number of hex characters");
+    }
+
+    @Test
+    void negMapValueRangeInvalidB64() {
+        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{=b64'A':b64'AQID'}")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("Base64 BLOB literal contains invalid Base64 content");
     }
 
     @Test
