@@ -49,7 +49,7 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
     private int letNestingDepth = 0;
 
     private static final Pattern VARIABLE_NAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
-    private static final Pattern FUNCTION_NAME_PATTERN = Pattern.compile("[a-zA-Z]+");
+    private static final Pattern FUNCTION_NAME_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z0-9]*");
 
     @Override
     public AbstractPart visitLetExpression(ConditionParser.LetExpressionContext ctx) {
@@ -875,7 +875,7 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
     private static void validateFunctionName(String name) {
         if (!FUNCTION_NAME_PATTERN.matcher(name).matches()) {
             throw new AelParseException(
-                    "Invalid function name '%s': must contain letters only".formatted(name));
+                    "Invalid function name '%s': must start with a letter and contain only letters and digits".formatted(name));
         }
     }
 
