@@ -275,14 +275,6 @@ class SyntaxErrorTests {
         assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("my_func($.bin) == 5")))
                 .isInstanceOf(AelParseException.class)
                 .hasMessageContaining("function name")
-                .hasMessageContaining("letters only");
-    }
-
-    @Test
-    void negFuncNameWithDigit() {
-        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("func1($.bin) == 5")))
-                .isInstanceOf(AelParseException.class)
-                .hasMessageContaining("function name")
-                .hasMessageContaining("letters only");
+                .hasMessageContaining("letters and digits");
     }
 }
