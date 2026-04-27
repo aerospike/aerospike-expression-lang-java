@@ -10,6 +10,8 @@ import com.aerospike.ael.client.exp.ListExp;
 import com.aerospike.ael.client.exp.MapExp;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -339,6 +341,174 @@ class BinNamingTests {
         void binNamedInCasePreserved() {
             Exp expected = Exp.eq(Exp.intBin("IN"), Exp.val(5));
             parseFilterExpressionAndCompare(ExpressionContext.of("$.IN == 5"), expected);
+        }
+    }
+
+    @Nested
+    class KeywordCdtPaths {
+
+        @Test
+        void binWhenWithMapKey() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val("key"), Exp.mapBin("when")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.when.key == 1"), expected);
+        }
+
+        @Test
+        void binDefaultWithMapKey() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val("key"), Exp.mapBin("default")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.default.key == 1"), expected);
+        }
+
+        @Test
+        void binLetWithMapKey() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val("key"), Exp.mapBin("let")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.let.key == 1"), expected);
+        }
+
+        @Test
+        void binAndWithListIndex() {
+            Exp expected = Exp.eq(
+                    ListExp.getByIndex(ListReturnType.VALUE, Exp.Type.INT,
+                            Exp.val(0), Exp.listBin("and")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.and.[0] == 1"), expected);
+        }
+
+        @Test
+        void binOrWithListIndex() {
+            Exp expected = Exp.eq(
+                    ListExp.getByIndex(ListReturnType.VALUE, Exp.Type.INT,
+                            Exp.val(0), Exp.listBin("or")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.or.[0] == 1"), expected);
+        }
+
+        @Test
+        void binThenWithListIndex() {
+            Exp expected = Exp.eq(
+                    ListExp.getByIndex(ListReturnType.VALUE, Exp.Type.INT,
+                            Exp.val(0), Exp.listBin("then")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.then.[0] == 1"), expected);
+        }
+
+        @Test
+        void quotedKeywordMapKeyWhen() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val("when"), Exp.mapBin("mapBin")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin.'when' == 1"), expected);
+        }
+
+        @Test
+        void quotedKeywordMapKeyDefault() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val("default"), Exp.mapBin("mapBin")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin.'default' == 1"), expected);
+        }
+
+        @Test
+        void quotedKeywordMapKeyAnd() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val("and"), Exp.mapBin("mapBin")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin.'and' == 1"), expected);
+        }
+
+        @Test
+        void quotedKeywordMapKeyOr() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val("or"), Exp.mapBin("mapBin")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin.'or' == 1"), expected);
+        }
+
+        @Test
+        void quotedKeywordMapKeyLet() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val("let"), Exp.mapBin("mapBin")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin.'let' == 1"), expected);
+        }
+
+        @Test
+        void quotedKeywordMapKeyThen() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val("then"), Exp.mapBin("mapBin")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin.'then' == 1"), expected);
+        }
+
+        @Test
+        void quotedKeywordMapKeyUnknown() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val("unknown"), Exp.mapBin("mapBin")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin.'unknown' == 1"), expected);
+        }
+
+        @Test
+        void quotedKeywordMapKeyError() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val("error"), Exp.mapBin("mapBin")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin.'error' == 1"), expected);
+        }
+    }
+
+    @Nested
+    class UnquotedKeywordCdtRestriction {
+
+        private static final String RESERVED_WORD_MSG = "reserved word";
+        private static final String MUST_BE_QUOTED_MSG = "must be quoted";
+
+        @ParameterizedTest
+        @ValueSource(strings = {"when", "default", "and", "or", "let", "then",
+                "unknown", "error", "true", "get"})
+        void negUnquotedMapKey(String keyword) {
+            assertThatThrownBy(() -> parseFilterExp(
+                    ExpressionContext.of("$.mapBin.%s == 1".formatted(keyword))))
+                    .isInstanceOf(AelParseException.class)
+                    .hasMessageContaining(RESERVED_WORD_MSG)
+                    .hasMessageContaining(MUST_BE_QUOTED_MSG);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"when", "unknown", "error"})
+        void negUnquotedListValue(String keyword) {
+            assertThatThrownBy(() -> parseFilterExp(
+                    ExpressionContext.of("$.listBin.[=%s] == 1".formatted(keyword))))
+                    .isInstanceOf(AelParseException.class)
+                    .hasMessageContaining(RESERVED_WORD_MSG)
+                    .hasMessageContaining(MUST_BE_QUOTED_MSG);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"unknown", "error"})
+        void negUnquotedMapValue(String keyword) {
+            assertThatThrownBy(() -> parseFilterExp(
+                    ExpressionContext.of("$.mapBin.{=%s} == 1".formatted(keyword))))
+                    .isInstanceOf(AelParseException.class)
+                    .hasMessageContaining(RESERVED_WORD_MSG)
+                    .hasMessageContaining(MUST_BE_QUOTED_MSG);
         }
     }
 

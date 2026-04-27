@@ -46,6 +46,7 @@ public abstract class AbstractPart {
         VARIABLE_OPERAND,
         PLACEHOLDER_OPERAND,
         FUNCTION_ARGS,
-        BLOB_OPERAND
+        BLOB_OPERAND,
+        UNKNOWN_OPERAND
     }
 }
