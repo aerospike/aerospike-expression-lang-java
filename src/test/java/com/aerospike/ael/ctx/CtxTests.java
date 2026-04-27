@@ -233,20 +233,20 @@ class CtxTests {
     @Test
     void ctxHexMapKey() {
         parseCtxAndCompareAsBase64("$.bin.0xff",
-                new CTX[]{CTX.mapKey(Value.get("0xff"))});
+                new CTX[]{CTX.mapKey(Value.get(255L))});
     }
 
     @Test
     void ctxBinaryMapKey() {
         parseCtxAndCompareAsBase64("$.bin.0b1010",
-                new CTX[]{CTX.mapKey(Value.get("0b1010"))});
+                new CTX[]{CTX.mapKey(Value.get(10L))});
     }
 
     @Test
     void ctxMixedMapKeyTypes() {
         parseCtxAndCompareAsBase64("$.bin.55.key.-1.0xff",
                 new CTX[]{CTX.mapKey(Value.get(55L)), CTX.mapKey(Value.get("key")),
-                        CTX.mapKey(Value.get(-1L)), CTX.mapKey(Value.get("0xff"))});
+                        CTX.mapKey(Value.get(-1L)), CTX.mapKey(Value.get(255L))});
     }
 
     @Test

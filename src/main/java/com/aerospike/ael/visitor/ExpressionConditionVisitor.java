@@ -1037,7 +1037,7 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
         BinPart binPart = null;
         List<AbstractPart> cdtParts = new ArrayList<>();
         // Filter out standalone '.' separator tokens. Embedded-dot tokens (pathIntMapKey,
-        // pathStringMapKey) have multi-char text (e.g. ".55", ".0xff") and pass through.
+        // pathHexBinaryMapKey) have multi-char text (e.g. ".55", ".0xff") and pass through.
         List<ParseTree> ctxChildrenExclDots = ctx.children.stream()
                 .filter(tree -> !tree.getText().equals("."))
                 .toList();
@@ -1126,9 +1126,9 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
     }
 
     @Override
-    public AbstractPart visitPathStringMapKey(ConditionParser.PathStringMapKeyContext ctx) {
+    public AbstractPart visitPathHexBinaryMapKey(ConditionParser.PathHexBinaryMapKeyContext ctx) {
         String tokenText = ctx.LEADING_DOT_FLOAT_HEX_OR_BINARY().getText();
-        return new MapKey(tokenText.substring(1)); // strip leading dot, keep as string
+        return new MapKey(parseUnsignedLongLiteral(tokenText.substring(1)));
     }
 
     @Override
