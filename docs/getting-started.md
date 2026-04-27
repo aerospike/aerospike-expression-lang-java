@@ -1,10 +1,10 @@
-# Getting Started with Aerospike Expression DSL
+# Getting Started with Aerospike Expression Language
 
-Welcome to the Aerospike Expression DSL for Java! Let's walk you through the first steps, from setup to running your first query.
+Welcome to the Aerospike Expression Language for Java! Let's walk you through the first steps, from setup to running your first query.
 
-## What is the Expression DSL?
+## What is the Expression Language?
 
-The Aerospike Expression DSL is a Java library that provides a simple, string-based language to create powerful server-side filters. Instead of building complex filter objects in Java, you can write an intuitive expression string, which the library translates into a native Aerospike Expression.
+The Aerospike Expression Language is a Java library that provides a simple, string-based language to create powerful server-side filters. Instead of building complex filter objects in Java, you can write an intuitive expression string, which the library translates into a native Aerospike Expression.
 
 For example, instead of writing this in Java:
 
@@ -40,14 +40,14 @@ Let's build and run a complete example.
 
 ### 1. Project Setup
 
-Add the Expression DSL and the Aerospike Java Client as dependencies to your project.
+Add the Expression Language and the Aerospike Java Client as dependencies to your project.
 
 **Maven (`pom.xml`):**
 ```xml
 <dependencies>
     <dependency>
         <groupId>com.aerospike</groupId>
-        <artifactId>aerospike-expression-dsl</artifactId>
+        <artifactId>aerospike-expression-lang-java</artifactId>
         <version>0.1.0</version> <!-- Check for the latest version -->
     </dependency>
     <dependency>
@@ -60,7 +60,7 @@ Add the Expression DSL and the Aerospike Java Client as dependencies to your pro
 
 ### 2. Write the Code
 
-Here is a Java example. It connects to a local Aerospike instance, writes a few sample records, and then uses a DSL expression to query for a subset of that data.
+Here is a Java example. It connects to a local Aerospike instance, writes a few sample records, and then uses a AEL expression to query for a subset of that data.
 
 ```java
 import com.aerospike.client.*;
@@ -69,12 +69,12 @@ import com.aerospike.client.exp.Expression;
 import com.aerospike.client.policy.QueryPolicy;
 import com.aerospike.client.query.RecordSet;
 import com.aerospike.client.query.Statement;
-import com.aerospike.dsl.ExpressionContext;
-import com.aerospike.dsl.ParsedExpression;
-import com.aerospike.dsl.api.DSLParser;
-import com.aerospike.dsl.impl.DSLParserImpl;
+import com.aerospike.ael.ExpressionContext;
+import com.aerospike.ael.ParsedExpression;
+import com.aerospike.ael.api.AelParser;
+import com.aerospike.ael.impl.AelParserImpl;
 
-public class DslQuickstart {
+public class AelQuickstart {
 
     public static void main(String[] args) {
         // 1. Connect to Aerospike
@@ -82,12 +82,12 @@ public class DslQuickstart {
             // 2. Write some sample data
             writeSampleData(client);
 
-            // 3. Define and Parse the DSL Expression
-            DSLParser parser = new DSLParserImpl();
-            String dslString = "$.age > 30 and $.city == 'New York'";
-            System.out.println("Using DSL Expression: " + dslString);
+            // 3. Define and Parse the AEL Expression
+            AelParser parser = new AelParserImpl();
+            String aelString = "$.age > 30 and $.city == 'New York'";
+            System.out.println("Using AEL Expression: " + aelString);
 
-            ParsedExpression parsedExpression = parser.parseExpression(ExpressionContext.of(dslString));
+            ParsedExpression parsedExpression = parser.parseExpression(ExpressionContext.of(aelString));
             Expression filterExpression = Exp.build(parsedExpression.getResult().getExp());
 
             // 4. Create and Execute the Query
@@ -127,18 +127,18 @@ public class DslQuickstart {
 
 ### 3. Run and Verify
 
-When you run this code, you will see the following output. Notice that only the two records matching the DSL filter (`age > 30` AND `city == 'New York'`) are returned.
+When you run this code, you will see the following output. Notice that only the two records matching the AEL filter (`age > 30` AND `city == 'New York'`) are returned.
 
 ```
 Sample data written.
-Using DSL Expression: $.age > 30 and $.city == 'New York'
+Using AEL Expression: $.age > 30 and $.city == 'New York'
 
 Query Results:
 (gen:1),(exp:486523),(bins:(name:Bob),(age:35),(city:New York))
 (gen:1),(exp:486523),(bins:(name:Charlie),(age:42),(city:New York))
 ```
 
-Congratulations! You've successfully used the Expression DSL to filter records in Aerospike.
+Congratulations! You've successfully used the Expression Language to filter records in Aerospike.
 
 ### Next Steps
 

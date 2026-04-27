@@ -1,12 +1,12 @@
 # Troubleshooting & FAQ
 
-This guide provides solutions to common problems and answers frequently asked questions about the Aerospike Expression DSL.
+This guide provides solutions to common problems and answers frequently asked questions about the Aerospike Expression Language.
 
 ## Common Errors and Solutions
 
-### `DslParseException`
+### `AelParseException`
 
-This is the most common exception thrown by the library, indicating a problem with the DSL string itself.
+This is the most common exception thrown by the library, indicating a problem with the AEL string itself.
 
 | Cause                       | Example | Solution                                                                                                                                    |
 |:----------------------------| :--- |:--------------------------------------------------------------------------------------------------------------------------------------------|
@@ -18,20 +18,20 @@ This is the most common exception thrown by the library, indicating a problem wi
 
 ### `IllegalArgumentException: Missing value for placeholder`
 
-This error occurs when your DSL string contains placeholders (`?0`, `?1`, etc.), but you did not provide a corresponding value in the `PlaceholderValues` object.
+This error occurs when your AEL string contains placeholders (`?0`, `?1`, etc.), but you did not provide a corresponding value in the `PlaceholderValues` object.
 
-**Example DSL:** `$.age > ?0 and $.city == ?1`
+**Example AEL:** `$.age > ?0 and $.city == ?1`
 
 **Incorrect Code:**
 ```java
 // Only one value provided, but two are needed
-ExpressionContext.of(dsl, PlaceholderValues.of(30)); 
+ExpressionContext.of(ael, PlaceholderValues.of(30)); 
 ```
 
 **Solution:** Ensure you provide a value for every placeholder in the correct order.
 
 ```java
-ExpressionContext.of(dsl, PlaceholderValues.of(30, "New York"));
+ExpressionContext.of(ael, PlaceholderValues.of(30, "New York"));
 ```
 
 ### Query is Slow or Scans the Entire Dataset

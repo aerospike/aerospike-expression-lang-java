@@ -1,12 +1,12 @@
 # Advanced Topic: Arithmetic Expressions
 
-The Expression DSL allows you to perform certain simple arithmetic operations directly on bin values within your expressions. This enables you to push mathematical computations to the Aerospike server, avoiding the need to pull data to the client for processing.
+The Expression Language allows you to perform certain simple arithmetic operations directly on bin values within your expressions. This enables you to push mathematical computations to the Aerospike server, avoiding the need to pull data to the client for processing.
 
 This is useful for a wide range of scenarios, such as dynamic price calculations, scoring, or checking computed thresholds.
 
 ## Supported Arithmetic Operators
 
-The DSL supports the standard set of arithmetic operators:
+The AEL supports the standard set of arithmetic operators:
 
 *   `+` (Addition)
 *   `-` (Subtraction)
@@ -20,7 +20,7 @@ You can use these operators on numeric bin values and literal numeric values.
 
 Imagine an e-commerce application where you want to find all orders that have a `quantity` of at least 5 and for which the `order_total` is greater than `quantity * price_per_item * 0.9` (representing a 10% discount threshold).
 
-### DSL String
+### AEL String
 
 You can write this complex logic as a single, clear expression:
 
@@ -44,8 +44,8 @@ This entire computation happens on the server, which is efficient.
 **Java Usage:**
 ```java
 // Find orders with quantity larger than 5 and arithmetical condition on order_total
-String dsl = "$.quantity >= 5 and $.order_total > ($.quantity * $.price_per_item * 0.9)";
-ExpressionContext context = ExpressionContext.of(dsl);
+String ael = "$.quantity >= 5 and $.order_total > ($.quantity * $.price_per_item * 0.9)";
+ExpressionContext context = ExpressionContext.of(ael);
 
 ParsedExpression parsed = parser.parseExpression(context);
 Expression filter = Exp.build(parsed.getResult().getExp());
@@ -64,7 +64,7 @@ Arithmetic expressions can be combined with placeholders to make them even more 
 
 Let's say you want to find users whose `login_streak` (number of consecutive days logged in) is greater than their `account_age` (in days) divided by a configurable factor.
 
-**DSL String with Placeholders:**
+**AEL String with Placeholders:**
 ```
 "$.login_streak > ($.account_age / ?0)"
 ```
@@ -72,9 +72,9 @@ Let's say you want to find users whose `login_streak` (number of consecutive day
 **Java Usage:**
 ```java
 // Find users whose streak is greater than their account age divided by 7
-String dsl = "$.login_streak > ($.account_age / ?0)";
+String ael = "$.login_streak > ($.account_age / ?0)";
 PlaceholderValues values = PlaceholderValues.of(7);
-ExpressionContext context = ExpressionContext.of(dsl, values);
+ExpressionContext context = ExpressionContext.of(ael, values);
 
 ParsedExpression parsed = parser.parseExpression(context);
 Expression filter = Exp.build(parsed.getResult().getExp());
@@ -87,7 +87,7 @@ queryPolicy.filterExp = filter;
 
 ## Operator Precedence
 
-The DSL follows standard mathematical operator precedence. `*`, `/`, and `%` have higher precedence than `+` and `-`. You can use parentheses `()` to explicitly control the order of evaluation.
+The AEL follows standard mathematical operator precedence. `*`, `/`, and `%` have higher precedence than `+` and `-`. You can use parentheses `()` to explicitly control the order of evaluation.
 
 **Example:**
 This expression:

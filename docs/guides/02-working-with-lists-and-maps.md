@@ -1,6 +1,6 @@
 # Guide: Working with Lists and Maps
 
-The Expression DSL provides a powerful and intuitive syntax for filtering on Complex Data Types (CDTs), such as Lists and Maps. This guide will show you how to query these structures.
+The Expression Language provides a powerful and intuitive syntax for filtering on Complex Data Types (CDTs), such as Lists and Maps. This guide will show you how to query these structures.
 
 The syntax allows to work with complex data filtering in a readable manner, leading to highly efficient queries.
 
@@ -23,7 +23,7 @@ Let's say you have a `user` bin that is a map containing profile information.
 }
 ```
 
-**DSL String:**
+**AEL String:**
 To find users with more than 100 logins, you can write:
 ```
 "$.user.logins > 100"
@@ -48,7 +48,7 @@ If a map key contains spaces or special characters, you can use single quotes.
 }
 ```
 
-**DSL String:**
+**AEL String:**
 ```
 "$.metrics.'daily logins' > 20"
 ```
@@ -70,14 +70,14 @@ Assuming we have the same map containing profile information:
 
 Indexes are 0-based. To access the first element, use `[0]`.
 
-**DSL String:**
+**AEL String:**
 To find records with element indexed at 0 having value `Alice`, you can write it in a short form:
 
 ```
 "$.user.{0} == 'Alice'"
 ```
 
-Or use the full form of such DSL string if needed:
+Or use the full form of such AEL string if needed:
 
 ```
 "$.user.{0}.get(type: STRING, return: VALUE) == 'Alice'"
@@ -85,7 +85,7 @@ Or use the full form of such DSL string if needed:
 
 ### Filtering by Map Value
 
-**DSL String:**
+**AEL String:**
 To find records having element with value 150, you can write:
 ```
 "$.user.{=150}"
@@ -110,7 +110,7 @@ Assuming we have an ordered map containing user preferences information:
   }
 }
 ```
-**DSL String:**
+**AEL String:**
 To find records having value of an element with rank 2 larger than 20, you can write:
 ```
 "$.user.{#2} > 20"
@@ -135,7 +135,7 @@ Let's say you have a `scores` list bin containing test scores.
 }
 ```
 
-**DSL String:**
+**AEL String:**
 To find records where the first score is greater than 90:
 ```
 "$.scores.[0] > 90"
@@ -143,7 +143,7 @@ To find records where the first score is greater than 90:
 
 ### Filtering by List Value
 
-**DSL String:**
+**AEL String:**
 To find records with a scores element equal to 90:
 ```
 "$.scores.[=90]"
@@ -156,7 +156,7 @@ For instance, you can use counting function to find if there are multiple record
 
 ### Filtering by List Rank
 
-**DSL String:**
+**AEL String:**
 To find records where the value of scores element with rank 2 is larger than 30:
 ```
 "$.scores.[#2] > 30"
@@ -164,7 +164,7 @@ To find records where the value of scores element with rank 2 is larger than 30:
 
 ## Querying Nested Structures
 
-The real power of the DSL shines when you combine these accessors to query deeply nested data.
+The real power of the AEL shines when you combine these accessors to query deeply nested data.
 
 ### Map containing a List
 
@@ -180,7 +180,7 @@ Imagine a `user` bin where one of the map values is a list of roles.
 }
 ```
 
-**DSL String:**
+**AEL String:**
 To find a user whose first role is "admin":
 ```
 "$.user.roles.[0] == 'admin'"
@@ -200,7 +200,7 @@ Now consider a list of `devices`, where each element is a map.
 }
 ```
 
-**DSL String:**
+**AEL String:**
 To find records where the second device is a laptop:
 ```
 "$.devices.[1].type == 'laptop'"
@@ -210,7 +210,7 @@ To find records where the second device is a laptop:
 
 You can call functions on CDT bins, such as counting the size.
 
-**DSL String:**
+**AEL String:**
 To find records where the `devices` list contains more than 1 item:
 ```
 "$.devices.count() > 1"

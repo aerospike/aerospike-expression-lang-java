@@ -1,10 +1,10 @@
 # Guide: Writing Your First Expression
 
-This guide covers the fundamental syntax of the Aerospike Expression DSL. You will learn how to filter records based on bin values and combine multiple conditions.
+This guide covers the fundamental syntax of the Aerospike Expression Language. You will learn how to filter records based on bin values and combine multiple conditions.
 
-## Anatomy of the DSL
+## Anatomy of the AEL
 
-The Expression DSL is a functional language for applying predicates to Aerospike bin data and record metadata. Here’s a breakdown of a simple example:
+The Aerospike Expression Language is a functional language for applying predicates to Aerospike bin data and record metadata. Here’s a breakdown of a simple example:
 
 ```
 $.binName > 100
@@ -22,7 +22,7 @@ All expressions start with `$.` to signify the root of the record. You follow it
 
 ### Operators
 
-The DSL supports a rich set of operators.
+The AEL supports a rich set of operators.
 
 *   **Comparison**: `==`, `!=`, `>`, `>=`, `<`, `<=`
 *   **Logical**: `and`, `or`, `not()`, `exclusive()`
@@ -43,7 +43,7 @@ Here are some examples of basic filters on different data types.
 
 To filter on a bin containing an integer or float, use standard comparison operators.
 
-**DSL String:**
+**AEL String:**
 ```
 "$.age >= 30"
 ```
@@ -60,7 +60,7 @@ queryPolicy.filterExp = Exp.build(parsed.getResult().getExp());
 
 Remember to enclose string literals in single quotes.
 
-**DSL String:**
+**AEL String:**
 ```
 "$.country == 'US'"
 ```
@@ -73,7 +73,7 @@ ExpressionContext context = ExpressionContext.of("$.country == 'US'");
 
 ### Boolean Bins
 
-**DSL String:**
+**AEL String:**
 ```
 "$.active == true"
 ```
@@ -86,7 +86,7 @@ You can build complex filters by combining conditions with `and` and `or`. Use p
 
 Returns records that match **all** conditions.
 
-**DSL String:**
+**AEL String:**
 ```
 "$.age > 30 and $.country == 'US'"
 ```
@@ -95,7 +95,7 @@ Returns records that match **all** conditions.
 
 Returns records that match **at least one** of the conditions.
 
-**DSL String:**
+**AEL String:**
 ```
 "$.tier == 'premium' or $.logins > 100"
 ```
@@ -104,7 +104,7 @@ Returns records that match **at least one** of the conditions.
 
 Negates a condition.
 
-**DSL String:**
+**AEL String:**
 ```
 "not($.country == 'US')"
 ```
@@ -113,7 +113,7 @@ Negates a condition.
 
 Creates an expression that returns true if only one of its parts is true.
 
-**DSL String:**
+**AEL String:**
 ```
 "exclusive($.x < '5', $.x > '5')"
 ```
