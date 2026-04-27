@@ -468,6 +468,133 @@ public class BlobTests {
         assertThat(actual).isNotNull();
     }
 
+    // ---- BLOB as CDT Path Map Key ----
+
+    @Test
+    void blobHexMapKeyAccess() {
+        Expression actual = Exp.build(parseFilterExp(
+                ExpressionContext.of("$.mb.X'ff'.get(type: INT) == 1")));
+        assertThat(actual).isNotNull();
+    }
+
+    @Test
+    void blobB64MapKeyAccess() {
+        Expression actual = Exp.build(parseFilterExp(
+                ExpressionContext.of("$.mb.b64'AQID'.get(type: INT) == 1")));
+        assertThat(actual).isNotNull();
+    }
+
+    @Test
+    void blobKeyRange() {
+        Expression actual = Exp.build(parseFilterExp(
+                ExpressionContext.of("$.mb.{X'aa'-X'ff'}.get(type: INT) == 1")));
+        assertThat(actual).isNotNull();
+    }
+
+    @Test
+    void blobKeyList() {
+        Expression actual = Exp.build(parseFilterExp(
+                ExpressionContext.of("$.mb.{X'aa',X'bb'}.get(type: INT) == 1")));
+        assertThat(actual).isNotNull();
+    }
+
+    @Test
+    void blobIndexRangeRelative() {
+        Expression actual = Exp.build(parseFilterExp(
+                ExpressionContext.of("$.mb.{0:~X'ff'}.get(type: INT) == 1")));
+        assertThat(actual).isNotNull();
+    }
+
+    // ---- Negative: Malformed BLOB as Map Key ----
+
+    @Test
+    void negBlobMapKeyOddHex() {
+        assertThatThrownBy(() -> parseFilterExp(
+                ExpressionContext.of("$.mb.X'f'.get(type: INT) == 1")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("even number of hex characters");
+    }
+
+    @Test
+    void negBlobMapKeyOddHex3Chars() {
+        assertThatThrownBy(() -> parseFilterExp(
+                ExpressionContext.of("$.mb.X'abc'.get(type: INT) == 1")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("even number of hex characters");
+    }
+
+    @Test
+    void negBlobMapKeyHexWithSpaces() {
+        assertThatThrownBy(() -> parseFilterExp(
+                ExpressionContext.of("$.mb.X'ff 00'.get(type: INT) == 1")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("Could not parse");
+    }
+
+    @Test
+    void negBlobMapKeyInvalidHexChars() {
+        assertThatThrownBy(() -> parseFilterExp(
+                ExpressionContext.of("$.mb.X'ZZZZ'.get(type: INT) == 1")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("Could not parse");
+    }
+
+    @Test
+    void negBlobMapKeyInvalidB64Content() {
+        assertThatThrownBy(() -> parseFilterExp(
+                ExpressionContext.of("$.mb.b64'A'.get(type: INT) == 1")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("Base64 BLOB literal contains invalid Base64 content");
+    }
+
+    @Test
+    void negBlobMapKeyInvalidB64Chars() {
+        assertThatThrownBy(() -> parseFilterExp(
+                ExpressionContext.of("$.mb.b64'!!!!'.get(type: INT) == 1")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("Could not parse");
+    }
+
+    @Test
+    void negBlobMapKeyB64WithSpaces() {
+        assertThatThrownBy(() -> parseFilterExp(
+                ExpressionContext.of("$.mb.b64'AQ ID'.get(type: INT) == 1")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("Could not parse");
+    }
+
+    @Test
+    void negBlobKeyRangeOddHex() {
+        assertThatThrownBy(() -> parseFilterExp(
+                ExpressionContext.of("$.mb.{X'f'-X'ff'}.get(type: INT) == 1")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("even number of hex characters");
+    }
+
+    @Test
+    void negBlobKeyRangeInvalidB64() {
+        assertThatThrownBy(() -> parseFilterExp(
+                ExpressionContext.of("$.mb.{b64'A'-b64'AQID'}.get(type: INT) == 1")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("Base64 BLOB literal contains invalid Base64 content");
+    }
+
+    @Test
+    void negBlobKeyListOddHex() {
+        assertThatThrownBy(() -> parseFilterExp(
+                ExpressionContext.of("$.mb.{X'f',X'ff'}.get(type: INT) == 1")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("even number of hex characters");
+    }
+
+    @Test
+    void negBlobRelativeKeyOddHex() {
+        assertThatThrownBy(() -> parseFilterExp(
+                ExpressionContext.of("$.mb.{0:~X'f'}.get(type: INT) == 1")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("even number of hex characters");
+    }
+
     // ---- BLOB Not Supported in Arithmetic ----
 
     @Test

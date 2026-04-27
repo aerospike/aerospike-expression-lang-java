@@ -1,7 +1,7 @@
 grammar Condition;
 
 @header {
-    package com.aerospike.ael;
+    package com.aerospike.dsl;
 }
 
 parse: expression EOF;
@@ -283,6 +283,8 @@ mapKey
     | QUOTED_STRING
     | IN
     | INT
+    | BLOB_LITERAL
+    | B64_LITERAL
     ;
 
 mapValue: '{=' valueIdentifier '}';

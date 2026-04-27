@@ -18,7 +18,7 @@ public class MapKeyList extends MapPart {
 
     public MapKeyList(boolean isInverted, List<Object> keyList) {
         super(MapPartType.KEY_LIST);
-        keyList.forEach(k -> requireStringOrLong(k, "MapKeyList"));
+        keyList.forEach(k -> requireSupportedKeyType(k, "MapKeyList"));
         this.isInverted = isInverted;
         this.keyList = keyList;
     }

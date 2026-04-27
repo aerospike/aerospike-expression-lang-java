@@ -19,9 +19,9 @@ public class MapKeyRange extends MapPart {
 
     public MapKeyRange(boolean isInverted, Object start, Object end) {
         super(MapPartType.KEY_RANGE);
-        requireStringOrLong(start, "MapKeyRange start");
+        requireSupportedKeyType(start, "MapKeyRange start");
         if (end != null) {
-            requireStringOrLong(end, "MapKeyRange end");
+            requireSupportedKeyType(end, "MapKeyRange end");
         }
         this.isInverted = isInverted;
         this.start = start;

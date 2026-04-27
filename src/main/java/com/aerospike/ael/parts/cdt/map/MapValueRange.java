@@ -8,9 +8,7 @@ import com.aerospike.ael.client.exp.Exp;
 import com.aerospike.ael.client.exp.MapExp;
 import com.aerospike.ael.parts.path.BasePath;
 
-import static com.aerospike.ael.util.ParsingUtils.objectToExp;
-import static com.aerospike.ael.util.ParsingUtils.parseValueIdentifier;
-import static com.aerospike.ael.util.ParsingUtils.requireSupportedExpValue;
+import static com.aerospike.ael.util.ParsingUtils.requireIntValueIdentifier;
 
 public class MapValueRange extends MapPart {
     private final boolean isInverted;

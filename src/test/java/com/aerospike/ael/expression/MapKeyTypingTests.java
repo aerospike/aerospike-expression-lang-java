@@ -222,19 +222,19 @@ class MapKeyTypingTests {
     class HexBinaryPathKeys {
 
         @Test
-        void hexMapKeyIsString() {
+        void hexMapKeyIsLong() {
             Exp expected = Exp.eq(
                     MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
-                            Exp.val("0xff"), Exp.mapBin("bin")),
+                            Exp.val(255L), Exp.mapBin("bin")),
                     Exp.val(10));
             parseFilterExpressionAndCompare(ExpressionContext.of("$.bin.0xff == 10"), expected);
         }
 
         @Test
-        void hexMapKeyCasePreserved() {
+        void hexMapKeyCaseProducesSameLong() {
             Exp expected = Exp.eq(
                     MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
-                            Exp.val("0xFF"), Exp.mapBin("bin")),
+                            Exp.val(255L), Exp.mapBin("bin")),
                     Exp.val(10));
             parseFilterExpressionAndCompare(ExpressionContext.of("$.bin.0xFF == 10"), expected);
         }
@@ -243,16 +243,16 @@ class MapKeyTypingTests {
         void hexMapKeyUpperPrefix() {
             Exp expected = Exp.eq(
                     MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
-                            Exp.val("0Xff"), Exp.mapBin("bin")),
+                            Exp.val(255L), Exp.mapBin("bin")),
                     Exp.val(10));
             parseFilterExpressionAndCompare(ExpressionContext.of("$.bin.0Xff == 10"), expected);
         }
 
         @Test
-        void binaryMapKeyIsString() {
+        void binaryMapKeyIsLong() {
             Exp expected = Exp.eq(
                     MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
-                            Exp.val("0b1010"), Exp.mapBin("bin")),
+                            Exp.val(10L), Exp.mapBin("bin")),
                     Exp.val(10));
             parseFilterExpressionAndCompare(ExpressionContext.of("$.bin.0b1010 == 10"), expected);
         }
@@ -261,7 +261,7 @@ class MapKeyTypingTests {
         void binaryMapKeyUpperPrefix() {
             Exp expected = Exp.eq(
                     MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
-                            Exp.val("0B1010"), Exp.mapBin("bin")),
+                            Exp.val(10L), Exp.mapBin("bin")),
                     Exp.val(10));
             parseFilterExpressionAndCompare(ExpressionContext.of("$.bin.0B1010 == 10"), expected);
         }
@@ -270,33 +270,61 @@ class MapKeyTypingTests {
         void fullMixedPath() {
             Exp expected = Exp.eq(
                     MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
-                            Exp.val("0b1010"), Exp.bin("bin", Exp.Type.MAP),
+                            Exp.val(10L), Exp.bin("bin", Exp.Type.MAP),
                             CTX.mapKey(Value.get(100L)), CTX.mapKey(Value.get(-100L)),
-                            CTX.mapKey(Value.get(100L)), CTX.mapKey(Value.get("0xff"))),
+                            CTX.mapKey(Value.get(100L)), CTX.mapKey(Value.get(255L))),
                     Exp.val(1));
             parseFilterExpressionAndCompare(
                     ExpressionContext.of("$.bin.100.-100.+100.0xff.0b1010 == 1"), expected);
         }
 
         @Test
-        void quotedHexEquivalent() {
+        void quotedHexNotEquivalent() {
             Expression unquoted = Exp.build(parseFilterExp(ExpressionContext.of("$.bin.0xff == 10")));
             Expression quoted = Exp.build(parseFilterExp(ExpressionContext.of("$.bin.\"0xff\" == 10")));
-            assertEquals(unquoted, quoted);
+            assertNotEquals(unquoted, quoted);
         }
 
         @Test
-        void quotedBinaryEquivalent() {
+        void quotedBinaryNotEquivalent() {
             Expression unquoted = Exp.build(parseFilterExp(ExpressionContext.of("$.bin.0b1010 == 10")));
             Expression quoted = Exp.build(parseFilterExp(ExpressionContext.of("$.bin.\"0b1010\" == 10")));
-            assertEquals(unquoted, quoted);
+            assertNotEquals(unquoted, quoted);
+        }
+
+        @Test
+        void hexMapKeyMaxLong() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val(Long.MAX_VALUE), Exp.mapBin("bin")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(
+                    ExpressionContext.of("$.bin.0x7FFFFFFFFFFFFFFF == 1"), expected);
+        }
+
+        @Test
+        void hexMapKeyUnsignedLongBoundary() {
+            Exp expected = Exp.eq(
+                    MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                            Exp.val(Long.MIN_VALUE), Exp.mapBin("bin")),
+                    Exp.val(1));
+            parseFilterExpressionAndCompare(
+                    ExpressionContext.of("$.bin.0x8000000000000000 == 1"), expected);
+        }
+
+        @Test
+        void hexMapKeyOverflow() {
+            assertThatThrownBy(() -> parseFilterExp(
+                    ExpressionContext.of("$.bin.0x10000000000000000 == 1")))
+                    .isInstanceOf(AelParseException.class)
+                    .hasMessageContaining("out of range");
         }
 
         @Test
         void hexKeyWithPathFunction() {
             Exp expected = Exp.eq(
                     MapExp.getByKey(MapReturnType.VALUE, Exp.Type.STRING,
-                            Exp.val("0xff"), Exp.mapBin("m")),
+                            Exp.val(255L), Exp.mapBin("m")),
                     Exp.val("x"));
             parseFilterExpressionAndCompare(
                     ExpressionContext.of("$.m.0xff.get(type: STRING) == \"x\""), expected);
@@ -344,28 +372,28 @@ class MapKeyTypingTests {
         @Test
         void hexIntInKeyRange() {
             Exp expected = MapExp.getByKeyRange(MapReturnType.VALUE,
-                    Exp.val("0xff"), Exp.val("z"), Exp.mapBin("bin"));
+                    Exp.val(255L), Exp.val("z"), Exp.mapBin("bin"));
             parseFilterExpressionAndCompare(ExpressionContext.of("$.bin.{0xff-z}"), expected);
         }
 
         @Test
         void hexIntInKeyList() {
             Exp expected = MapExp.getByKeyList(MapReturnType.VALUE,
-                    Exp.val(List.of("0xff", "abc")), Exp.mapBin("bin"));
+                    Exp.val(List.of(255L, "abc")), Exp.mapBin("bin"));
             parseFilterExpressionAndCompare(ExpressionContext.of("$.bin.{0xff,abc}"), expected);
         }
 
         @Test
         void binaryIntInKeyList() {
             Exp expected = MapExp.getByKeyList(MapReturnType.VALUE,
-                    Exp.val(List.of("0b1010", "abc")), Exp.mapBin("bin"));
+                    Exp.val(List.of(10L, "abc")), Exp.mapBin("bin"));
             parseFilterExpressionAndCompare(ExpressionContext.of("$.bin.{0b1010,abc}"), expected);
         }
 
         @Test
         void binaryIntInKeyRange() {
             Exp expected = MapExp.getByKeyRange(MapReturnType.VALUE,
-                    Exp.val("0b1010"), Exp.val("z"), Exp.mapBin("bin"));
+                    Exp.val(10L), Exp.val("z"), Exp.mapBin("bin"));
             parseFilterExpressionAndCompare(ExpressionContext.of("$.bin.{0b1010-z}"), expected);
         }
 
@@ -442,6 +470,38 @@ class MapKeyTypingTests {
                     ExpressionContext.of("$.bin.{99999999999999999999-z}")))
                     .isInstanceOf(AelParseException.class)
                     .hasMessageContaining("out of range");
+        }
+
+        @Test
+        void hexKeyMaxLongInBraces() {
+            Exp expected = MapExp.getByKeyRange(MapReturnType.VALUE,
+                    Exp.val(Long.MAX_VALUE), Exp.val("z"), Exp.mapBin("bin"));
+            parseFilterExpressionAndCompare(
+                    ExpressionContext.of("$.bin.{0x7FFFFFFFFFFFFFFF-z}"), expected);
+        }
+
+        @Test
+        void hexKeyUnsignedBoundaryInBraces() {
+            Exp expected = MapExp.getByKeyRange(MapReturnType.VALUE,
+                    Exp.val(Long.MIN_VALUE), Exp.val("z"), Exp.mapBin("bin"));
+            parseFilterExpressionAndCompare(
+                    ExpressionContext.of("$.bin.{0x8000000000000000-z}"), expected);
+        }
+
+        @Test
+        void hexKeyOverflowInBraces() {
+            assertThatThrownBy(() -> parseFilterExp(
+                    ExpressionContext.of("$.bin.{0x10000000000000000-z}")))
+                    .isInstanceOf(AelParseException.class)
+                    .hasMessageContaining("out of range");
+        }
+
+        @Test
+        void decimalKeyUnsignedBoundaryInBraces() {
+            Exp expected = MapExp.getByKeyRange(MapReturnType.VALUE,
+                    Exp.val(Long.MIN_VALUE), Exp.val("z"), Exp.mapBin("bin"));
+            parseFilterExpressionAndCompare(
+                    ExpressionContext.of("$.bin.{9223372036854775808-z}"), expected);
         }
     }
 

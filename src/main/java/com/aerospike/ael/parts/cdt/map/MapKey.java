@@ -13,7 +13,7 @@ public class MapKey extends MapPart {
 
     public MapKey(Object key) {
         super(MapPartType.KEY);
-        requireStringOrLong(key, "MapKey");
+        requireSupportedKeyType(key, "MapKey");
         this.key = key;
     }
 
