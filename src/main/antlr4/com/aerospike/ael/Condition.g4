@@ -1,7 +1,7 @@
 grammar Condition;
 
 @header {
-    package com.aerospike.dsl;
+    package com.aerospike.ael;
 }
 
 parse: expression EOF;
@@ -170,10 +170,10 @@ pathOrMetadata: path | metadata;
 
 path: basePath ('.' pathFunction)?;
 
-basePath: binPart (('.' (mapPart | listPart)) | pathIntMapKey | pathStringMapKey)*?;
+basePath: binPart (('.' (mapPart | listPart)) | pathIntMapKey | pathHexBinaryMapKey)*?;
 
 pathIntMapKey: LEADING_DOT_FLOAT | LEADING_DOT_SIGNED_INT;
-pathStringMapKey: LEADING_DOT_FLOAT_HEX_OR_BINARY;
+pathHexBinaryMapKey: LEADING_DOT_FLOAT_HEX_OR_BINARY;
 
 metadata: METADATA_FUNCTION;
 

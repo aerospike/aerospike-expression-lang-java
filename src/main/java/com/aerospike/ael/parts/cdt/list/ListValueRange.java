@@ -8,7 +8,9 @@ import com.aerospike.ael.client.exp.Exp;
 import com.aerospike.ael.client.exp.ListExp;
 import com.aerospike.ael.parts.path.BasePath;
 
-import static com.aerospike.ael.util.ParsingUtils.requireIntValueIdentifier;
+import static com.aerospike.ael.util.ParsingUtils.objectToExp;
+import static com.aerospike.ael.util.ParsingUtils.parseValueIdentifier;
+import static com.aerospike.ael.util.ParsingUtils.requireSupportedExpValue;
 
 public class ListValueRange extends ListPart {
     private final boolean isInverted;
