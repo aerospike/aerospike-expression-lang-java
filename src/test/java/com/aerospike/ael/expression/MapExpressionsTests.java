@@ -248,19 +248,15 @@ public class MapExpressionsTests {
     }
 
     @Test
-    void mapByValueHexAndBinarySelectorsAreUnsupported() {
-        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{=0xff} == 100")))
-                .isInstanceOf(AelParseException.class)
-                .hasMessageContaining("Only decimal integer literals are supported in this element");
-        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{=0b10} == 100")))
-                .isInstanceOf(AelParseException.class)
-                .hasMessageContaining("Only decimal integer literals are supported in this element");
-        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{=-0xff} == 100")))
-                .isInstanceOf(AelParseException.class)
-                .hasMessageContaining("Only decimal integer literals are supported in this element");
-        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{=-0b10} == 100")))
-                .isInstanceOf(AelParseException.class)
-                .hasMessageContaining("Only decimal integer literals are supported in this element");
+    void mapByValueHexAndBinarySelectors() {
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=0xff} == 100"),
+                Exp.eq(MapExp.getByValue(MapReturnType.VALUE, Exp.val(255), Exp.mapBin("mapBin1")), Exp.val(100)));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=0b10} == 100"),
+                Exp.eq(MapExp.getByValue(MapReturnType.VALUE, Exp.val(2), Exp.mapBin("mapBin1")), Exp.val(100)));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=-0xff} == 100"),
+                Exp.eq(MapExp.getByValue(MapReturnType.VALUE, Exp.val(-255), Exp.mapBin("mapBin1")), Exp.val(100)));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=-0b10} == 100"),
+                Exp.eq(MapExp.getByValue(MapReturnType.VALUE, Exp.val(-2), Exp.mapBin("mapBin1")), Exp.val(100)));
     }
 
     @Test
@@ -304,19 +300,53 @@ public class MapExpressionsTests {
     }
 
     @Test
-    void mapByRankHexAndBinarySelectorsAreUnsupported() {
-        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{#0xff} == 100")))
-                .isInstanceOf(AelParseException.class)
-                .hasMessageContaining("Only decimal integer literals are supported in this element");
-        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{#0b10} == 100")))
-                .isInstanceOf(AelParseException.class)
-                .hasMessageContaining("Only decimal integer literals are supported in this element");
-        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{#-0xff} == 100")))
-                .isInstanceOf(AelParseException.class)
-                .hasMessageContaining("Only decimal integer literals are supported in this element");
-        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{#-0b10} == 100")))
-                .isInstanceOf(AelParseException.class)
-                .hasMessageContaining("Only decimal integer literals are supported in this element");
+    void mapByRankHexAndBinarySelectors() {
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{#0xff} == 100"),
+                Exp.eq(MapExp.getByRank(MapReturnType.VALUE, Exp.Type.INT, Exp.val(255), Exp.mapBin("mapBin1")),
+                        Exp.val(100)));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{#0b10} == 100"),
+                Exp.eq(MapExp.getByRank(MapReturnType.VALUE, Exp.Type.INT, Exp.val(2), Exp.mapBin("mapBin1")),
+                        Exp.val(100)));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{#-0xff} == 100"),
+                Exp.eq(MapExp.getByRank(MapReturnType.VALUE, Exp.Type.INT, Exp.val(-255), Exp.mapBin("mapBin1")),
+                        Exp.val(100)));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{#-0b10} == 100"),
+                Exp.eq(MapExp.getByRank(MapReturnType.VALUE, Exp.Type.INT, Exp.val(-2), Exp.mapBin("mapBin1")),
+                        Exp.val(100)));
+    }
+
+    @Test
+    void mapIndexHexAndBinary() {
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{0xff} == 100"),
+                Exp.eq(MapExp.getByIndex(MapReturnType.VALUE, Exp.Type.INT, Exp.val(255),
+                        Exp.mapBin("mapBin1")), Exp.val(100)));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{-0b10} == 100"),
+                Exp.eq(MapExp.getByIndex(MapReturnType.VALUE, Exp.Type.INT, Exp.val(-2),
+                        Exp.mapBin("mapBin1")), Exp.val(100)));
+    }
+
+    @Test
+    void mapIndexRangeHex() {
+        Exp expected = MapExp.getByIndexRange(
+                MapReturnType.VALUE, Exp.val(1), Exp.val(2), Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.mapBin1.{0x01:0x03}"), expected);
+    }
+
+    @Test
+    void mapRankRangeHex() {
+        Exp expected = MapExp.getByRankRange(
+                MapReturnType.VALUE, Exp.val(1), Exp.val(2), Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.mapBin1.{#0x01:0x03}"), expected);
+    }
+
+    @Test
+    void mapValueRangeHex() {
+        Exp expected = MapExp.getByValueRange(
+                MapReturnType.VALUE, Exp.val(255), Exp.val(512), Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.mapBin1.{=0xff:0x200}"), expected);
     }
 
     @Test
@@ -330,6 +360,30 @@ public class MapExpressionsTests {
                 ),
                 Exp.val(100));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{#-2147483648} == 100"), expected);
+    }
+
+    @Test
+    void mapIndexHexMaxInt() {
+        Exp expected = Exp.eq(
+                MapExp.getByIndex(MapReturnType.VALUE, Exp.Type.INT,
+                        Exp.val(Integer.MAX_VALUE), Exp.mapBin("mapBin1")),
+                Exp.val(100));
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.mapBin1.{0x7FFFFFFF} == 100"), expected);
+    }
+
+    @Test
+    void mapIndexHexIntOverflow() {
+        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{0x80000000} == 100")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("out of range");
+    }
+
+    @Test
+    void mapRankHexIntOverflow() {
+        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("$.mapBin1.{#0x80000000} == 100")))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("out of range");
     }
 
     @Test
@@ -633,5 +687,29 @@ public class MapExpressionsTests {
         // Implicit detect as Int
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.a.get(type: INT, return: RANK) == 5"),
                 expected);
+    }
+
+    // ---- Map value type contrast ----
+
+    @Test
+    void mapValueQuotedIntIsString() {
+        Exp expectedDQ = Exp.eq(
+                MapExp.getByValue(MapReturnType.VALUE,
+                        Exp.val("1"), Exp.mapBin("mapBin")),
+                Exp.val("x"));
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.mapBin.{=\"1\"}.get(type: STRING) == \"x\""), expectedDQ);
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.mapBin.{='1'}.get(type: STRING) == 'x'"), expectedDQ);
+    }
+
+    @Test
+    void mapValueUnquotedIntIsInt() {
+        Exp expected = Exp.eq(
+                MapExp.getByValue(MapReturnType.VALUE,
+                        Exp.val(1), Exp.mapBin("mapBin")),
+                Exp.val(10));
+        TestUtils.parseFilterExpressionAndCompare(
+                ExpressionContext.of("$.mapBin.{=1} == 10"), expected);
     }
 }

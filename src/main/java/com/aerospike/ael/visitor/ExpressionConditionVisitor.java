@@ -35,9 +35,11 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 import static com.aerospike.ael.util.ParsingUtils.*;
 import static com.aerospike.ael.visitor.VisitorUtils.*;
@@ -46,16 +48,20 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
 
     private int letNestingDepth = 0;
 
+    private static final Pattern VARIABLE_NAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
+    private static final Pattern FUNCTION_NAME_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z0-9]*");
+
     @Override
     public AbstractPart visitLetExpression(ConditionParser.LetExpressionContext ctx) {
         letNestingDepth++;
         try {
             List<LetOperand> expressions = new ArrayList<>();
 
-            // iterate through each definition
             for (ConditionParser.VariableDefinitionContext vdc : ctx.variableDefinition()) {
+                String varName = vdc.NAME_IDENTIFIER().getText();
+                validateVariableName(varName);
                 AbstractPart part = visit(vdc.expression());
-                LetOperand letOperand = new LetOperand(part, vdc.NAME_IDENTIFIER().getText());
+                LetOperand letOperand = new LetOperand(part, varName);
                 expressions.add(letOperand);
             }
             // last expression is the action (described after "then")
@@ -649,6 +655,7 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
         }
 
         String funcName = ctx.NAME_IDENTIFIER().getText();
+        validateFunctionName(funcName);
         List<AbstractPart> args = new ArrayList<>();
         for (ConditionParser.ExpressionContext ec : ctx.expression()) {
             args.add(visit(ec));
@@ -837,13 +844,46 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
 
     @Override
     public AbstractPart visitBinPart(ConditionParser.BinPartContext ctx) {
-        if (ctx.NAME_IDENTIFIER() != null) {
-            return new BinPart(ctx.NAME_IDENTIFIER().getText());
+        if (ctx.BIN_IDENTIFIER() != null) {
+            String binName = ctx.BIN_IDENTIFIER().getText();
+            rejectBinNameContainingNull(binName);
+            return new BinPart(binName);
         }
-        if (ctx.IN() != null) {
-            return new BinPart(ctx.IN().getText());
+        if (ctx.QUOTED_STRING() != null) {
+            String quoted = ctx.QUOTED_STRING().getText();
+            if (quoted.length() <= 2) {
+                throw new AelParseException("Bin name must not be empty");
+            }
+            String binName = unquote(quoted);
+            rejectBinNameContainingNull(binName);
+            return new BinPart(binName);
         }
-        throw new AelParseException("Could not parse binPart from ctx: %s".formatted(ctx.getText()));
+        // Fallthrough: NAME_IDENTIFIER, IN, TRUE, FALSE, and all keyword literals ('and', 'or',
+        // 'not', etc.). ctx.getText() returns the matched text preserving original case.
+        String binName = ctx.getText();
+        rejectBinNameContainingNull(binName);
+        return new BinPart(binName);
+    }
+
+    private static void validateVariableName(String name) {
+        if (!VARIABLE_NAME_PATTERN.matcher(name).matches()) {
+            throw new AelParseException(
+                    "Invalid variable name '%s': must start with a letter or underscore".formatted(name));
+        }
+    }
+
+    private static void validateFunctionName(String name) {
+        if (!FUNCTION_NAME_PATTERN.matcher(name).matches()) {
+            throw new AelParseException(
+                    "Invalid function name '%s': must start with a letter and contain only letters and digits".formatted(name));
+        }
+    }
+
+    private static void rejectBinNameContainingNull(String binName) {
+        if (binName.toLowerCase(Locale.ROOT).contains("null")) {
+            throw new AelParseException(
+                    "Bin name must not contain the reserved word 'null': " + binName);
+        }
     }
 
     @Override
@@ -996,6 +1036,8 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
     public AbstractPart visitBasePath(ConditionParser.BasePathContext ctx) {
         BinPart binPart = null;
         List<AbstractPart> cdtParts = new ArrayList<>();
+        // Filter out standalone '.' separator tokens. Embedded-dot tokens (pathIntMapKey,
+        // pathHexBinaryMapKey) have multi-char text (e.g. ".55", ".0xff") and pass through.
         List<ParseTree> ctxChildrenExclDots = ctx.children.stream()
                 .filter(tree -> !tree.getText().equals("."))
                 .toList();
@@ -1075,6 +1117,18 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
         if (ctx.listRankRangeRelative() != null)
             return ListRankRangeRelative.from(ctx.listRankRangeRelative());
         throw new AelParseException("Unexpected list part: %s".formatted(ctx.getText()));
+    }
+
+    @Override
+    public AbstractPart visitPathIntMapKey(ConditionParser.PathIntMapKeyContext ctx) {
+        String keyText = ctx.getText().substring(1); // strip leading dot
+        return new MapKey(parseLongMapKey(keyText));
+    }
+
+    @Override
+    public AbstractPart visitPathHexBinaryMapKey(ConditionParser.PathHexBinaryMapKeyContext ctx) {
+        String tokenText = ctx.LEADING_DOT_FLOAT_HEX_OR_BINARY().getText();
+        return new MapKey(parseUnsignedLongLiteral(tokenText.substring(1)));
     }
 
     @Override

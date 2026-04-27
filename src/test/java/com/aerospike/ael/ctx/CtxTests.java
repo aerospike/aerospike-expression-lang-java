@@ -209,4 +209,87 @@ class CtxTests {
         parseCtxAndCompareAsBase64("$.bin.[=b64'AQID']",
                 new CTX[]{CTX.listValue(Value.get(new byte[]{1, 2, 3}))});
     }
+
+    // ---- New map key type tests ----
+
+    @Test
+    void ctxDigitOnlyMapKey() {
+        parseCtxAndCompareAsBase64("$.bin.55",
+                new CTX[]{CTX.mapKey(Value.get(55L))});
+    }
+
+    @Test
+    void ctxNegativeSignedMapKey() {
+        parseCtxAndCompareAsBase64("$.bin.-100",
+                new CTX[]{CTX.mapKey(Value.get(-100L))});
+    }
+
+    @Test
+    void ctxPositiveSignedMapKey() {
+        parseCtxAndCompareAsBase64("$.bin.+100",
+                new CTX[]{CTX.mapKey(Value.get(100L))});
+    }
+
+    @Test
+    void ctxHexMapKey() {
+        parseCtxAndCompareAsBase64("$.bin.0xff",
+                new CTX[]{CTX.mapKey(Value.get(255L))});
+    }
+
+    @Test
+    void ctxBinaryMapKey() {
+        parseCtxAndCompareAsBase64("$.bin.0b1010",
+                new CTX[]{CTX.mapKey(Value.get(10L))});
+    }
+
+    @Test
+    void ctxMixedMapKeyTypes() {
+        parseCtxAndCompareAsBase64("$.bin.55.key.-1.0xff",
+                new CTX[]{CTX.mapKey(Value.get(55L)), CTX.mapKey(Value.get("key")),
+                        CTX.mapKey(Value.get(-1L)), CTX.mapKey(Value.get(255L))});
+    }
+
+    @Test
+    void ctxAtBinWithMapKey() {
+        parseCtxAndCompareAsBase64("$.name@host.key",
+                new CTX[]{CTX.mapKey(Value.get("key"))});
+    }
+
+    @Test
+    void ctxAtBinWithListIndex() {
+        parseCtxAndCompareAsBase64("$.@attr.[0]",
+                new CTX[]{CTX.listIndex(0)});
+    }
+
+    @Test
+    void ctxLeadingZeroMapKey() {
+        parseCtxAndCompareAsBase64("$.bin.007",
+                new CTX[]{CTX.mapKey(Value.get(7L))});
+    }
+
+    @Test
+    void ctxHexBlobMapKey() {
+        parseCtxAndCompareAsBase64("$.bin.X'ff00'",
+                new CTX[]{CTX.mapKey(Value.get(new byte[]{(byte) 0xff, 0x00}))});
+    }
+
+    @Test
+    void ctxB64BlobMapKey() {
+        parseCtxAndCompareAsBase64("$.bin.b64'AQID'",
+                new CTX[]{CTX.mapKey(Value.get(new byte[]{1, 2, 3}))});
+    }
+
+    @Test
+    void ctxMixedWithBlobMapKey() {
+        parseCtxAndCompareAsBase64("$.bin.X'ff'.key.-1",
+                new CTX[]{CTX.mapKey(Value.get(new byte[]{(byte) 0xff})),
+                        CTX.mapKey(Value.get("key")), CTX.mapKey(Value.get(-1L))});
+    }
+
+    @Test
+    void ctxBlobKeyWithMapIndex() {
+        parseCtxAndCompareAsBase64("$.bin.X'aa'.{0}",
+                new CTX[]{CTX.mapKey(Value.get(new byte[]{(byte) 0xaa})),
+                        CTX.mapIndex(0)});
+    }
 }

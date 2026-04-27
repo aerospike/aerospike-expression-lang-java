@@ -21,6 +21,7 @@ public class ParsingUtils {
      * Extracts a signed integer value from a {@code signedInt} parser rule context.
      * The grammar rule is {@code signedInt: '-'? INT;}, so the context contains
      * either just an INT token or a '-' followed by an INT token.
+     * Supports decimal, hexadecimal (0x), and binary (0b) INT tokens.
      *
      * @param ctx The signedInt context from the parser
      * @return The parsed integer value, negated if a '-' prefix is present
@@ -28,35 +29,12 @@ public class ParsingUtils {
     public static int parseSignedInt(ConditionParser.SignedIntContext ctx) {
         String intText = ctx.INT().getText();
         boolean isNegative = ctx.getText().startsWith("-");
-        if (isHexOrBinaryIntToken(intText)) {
-            throw new AelParseException("Only decimal integer literals are supported in this element: " + ctx.getText());
-        }
-
-        BigInteger signedValue = getBigInteger(ctx, intText, isNegative);
-
-        return signedValue.intValue();
-    }
-
-    private static BigInteger getBigInteger(ConditionParser.SignedIntContext ctx, String intText, boolean isNegative) {
-        BigInteger value;
-        try {
-            value = new BigInteger(intText, 10);
-        } catch (NumberFormatException e) {
-            throw new AelParseException("Invalid integer literal: " + ctx.getText(), e);
-        }
+        BigInteger value = parseUnsignedIntegerLiteral(intText);
         BigInteger signedValue = isNegative ? value.negate() : value;
-
         if (signedValue.compareTo(INT_MIN_VALUE) < 0 || signedValue.compareTo(INT_MAX_VALUE) > 0) {
             throw new AelParseException("Signed integer literal out of range for INT: " + ctx.getText());
         }
-        return signedValue;
-    }
-
-    private static boolean isHexOrBinaryIntToken(String intText) {
-        return intText.length() > 2
-                && intText.charAt(0) == '0'
-                && (intText.charAt(1) == 'x' || intText.charAt(1) == 'X'
-                || intText.charAt(1) == 'b' || intText.charAt(1) == 'B');
+        return signedValue.intValue();
     }
 
     /**
@@ -118,18 +96,42 @@ public class ParsingUtils {
     }
 
     /**
-     * Extracts the text content from a {@code mapKey} parser rule context.
-     * Handles NAME_IDENTIFIER, QUOTED_STRING, and IN keyword (as literal text).
+     * Extracts a typed value from a {@code mapKey} parser rule context.
+     * Returns {@link Long} for all INT tokens (decimal, hex, binary),
+     * {@link String} for NAME_IDENTIFIER, QUOTED_STRING, and IN keyword.
      *
      * @param ctx The mapKey context from the parser
-     * @return The parsed key string
+     * @return The parsed key as String, Long, or byte[]
      */
-    public static String parseMapKey(ConditionParser.MapKeyContext ctx) {
+    public static Object parseMapKey(ConditionParser.MapKeyContext ctx) {
         String result = resolveStringToken(ctx);
         if (result != null) {
             return result;
         }
+        TerminalNode intToken = ctx.getToken(ConditionParser.INT, 0);
+        if (intToken != null) {
+            return parseUnsignedLongLiteral(intToken.getText());
+        }
+        TerminalNode blobLiteral = ctx.getToken(ConditionParser.BLOB_LITERAL, 0);
+        if (blobLiteral != null) {
+            return parseHexToBytes(blobLiteral.getText());
+        }
+        TerminalNode b64Literal = ctx.getToken(ConditionParser.B64_LITERAL, 0);
+        if (b64Literal != null) {
+            return parseB64ToBytes(b64Literal.getText());
+        }
         throw new AelParseException("Could not parse mapKey from ctx: %s".formatted(ctx.getText()));
+    }
+
+    /**
+     * Parses a decimal digit string as a long map key, wrapping overflow in {@link AelParseException}.
+     */
+    public static long parseLongMapKey(String text) {
+        try {
+            return Long.parseLong(text);
+        } catch (NumberFormatException e) {
+            throw new AelParseException("Integer map key out of range: " + text, e);
+        }
     }
 
     /**
@@ -202,8 +204,7 @@ public class ParsingUtils {
 
     /**
      * Converts a parsed value object to an {@link Exp} value expression.
-     * Supports the types produced by {@link #parseValueIdentifier}: {@link String}, {@link Integer},
-     * and {@code byte[]}.
+     * Supports {@link String}, {@link Long}, {@link Integer}, and {@code byte[]}.
      *
      * @param value The parsed value object
      * @return The corresponding {@link Exp} value expression
@@ -211,6 +212,7 @@ public class ParsingUtils {
      */
     public static Exp objectToExp(Object value) {
         if (value instanceof String s) return Exp.val(s);
+        if (value instanceof Long l) return Exp.val(l);
         if (value instanceof Integer i) return Exp.val(i);
         if (value instanceof byte[] b) return Exp.val(b);
         throw new AelParseException(

@@ -123,6 +123,8 @@ FLOAT: [0-9]+ '.' [0-9]+;
 // Precedes LEADING_DOT_FLOAT so the lexer greedily captures .0xff and .0b101 as one token
 LEADING_DOT_FLOAT_HEX_OR_BINARY: '.' '0' ([xX] [0-9a-fA-F]+ | [bB] [01]+);
 
+LEADING_DOT_SIGNED_INT: '.' [+-] [0-9]+;
+
 // To support .N syntax safely and keep tokenization predictable
 LEADING_DOT_FLOAT: '.' [0-9]+;
 
@@ -168,7 +170,10 @@ pathOrMetadata: path | metadata;
 
 path: basePath ('.' pathFunction)?;
 
-basePath: binPart ('.' (mapPart | listPart))*?;
+basePath: binPart (('.' (mapPart | listPart)) | pathIntMapKey | pathHexBinaryMapKey)*?;
+
+pathIntMapKey: LEADING_DOT_FLOAT | LEADING_DOT_SIGNED_INT;
+pathHexBinaryMapKey: LEADING_DOT_FLOAT_HEX_OR_BINARY;
 
 metadata: METADATA_FUNCTION;
 
@@ -228,7 +233,32 @@ PATH_FUNCTION_CDT_RETURN_TYPE
     | 'REVERSE_RANK'
     ;
 
-binPart: NAME_IDENTIFIER | IN;
+binPart
+    : BIN_IDENTIFIER
+    | NAME_IDENTIFIER
+    | QUOTED_STRING
+    | IN
+    | TRUE
+    | FALSE
+    | PATH_FUNCTION_GET
+    | PATH_FUNCTION_PARAM_TYPE
+    | PATH_FUNCTION_PARAM_RETURN
+    | 'and'
+    | 'or'
+    | 'not'
+    | 'exclusive'
+    | 'let'
+    | 'then'
+    | 'when'
+    | 'default'
+    | 'remove'
+    | 'insert'
+    | 'set'
+    | 'append'
+    | 'increment'
+    | 'clear'
+    | 'sort'
+    ;
 
 mapPart
     : MAP_TYPE_DESIGNATOR
@@ -252,6 +282,9 @@ mapKey
     : NAME_IDENTIFIER
     | QUOTED_STRING
     | IN
+    | INT
+    | BLOB_LITERAL
+    | B64_LITERAL
     ;
 
 mapValue: '{=' valueIdentifier '}';
@@ -552,5 +585,9 @@ pathFunctionParam: pathFunctionParamName ':' pathFunctionParamValue;
 IN: [iI][nN];
 
 NAME_IDENTIFIER: [a-zA-Z0-9_]+;
+
+// Must be AFTER NAME_IDENTIFIER: only inputs containing '@' match exclusively (longer match);
+// for inputs without '@', NAME_IDENTIFIER wins by ANTLR first-match priority.
+BIN_IDENTIFIER: [a-zA-Z0-9_@]+;
 
 WS: [ \t\r\n]+ -> skip;

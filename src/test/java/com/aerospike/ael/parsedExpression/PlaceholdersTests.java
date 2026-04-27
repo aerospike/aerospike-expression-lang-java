@@ -366,4 +366,36 @@ public class PlaceholdersTests {
                 ExpressionContext.of("$.b.get(type: BLOB) IN ?0", PlaceholderValues.of(list))));
         assertThat(actual).isNotNull();
     }
+
+    // ---- Placeholder integration with naming features ----
+
+    @Test
+    void intMapKeyWithPlaceholder() {
+        Exp exp = Exp.eq(
+                MapExp.getByKey(MapReturnType.VALUE, Exp.Type.INT,
+                        Exp.val(55L), Exp.mapBin("bin")),
+                Exp.val(10));
+        TestUtils.parseAelExpressionAndCompare(
+                ExpressionContext.of("$.bin.55 == ?0", PlaceholderValues.of(10)),
+                null, exp);
+    }
+
+    @Test
+    void atBinWithPlaceholder() {
+        Exp exp = Exp.eq(Exp.intBin("name@host"), Exp.val(42));
+        TestUtils.parseAelExpressionAndCompare(
+                ExpressionContext.of("$.name@host == ?0", PlaceholderValues.of(42)),
+                null, exp);
+    }
+
+    @Test
+    void signedMapKeyWithPlaceholder() {
+        Exp exp = Exp.eq(
+                MapExp.getByKey(MapReturnType.VALUE, Exp.Type.STRING,
+                        Exp.val(-100L), Exp.mapBin("bin")),
+                Exp.val("test"));
+        TestUtils.parseAelExpressionAndCompare(
+                ExpressionContext.of("$.bin.-100 == ?0", PlaceholderValues.of("test")),
+                null, exp);
+    }
 }

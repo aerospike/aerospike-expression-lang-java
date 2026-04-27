@@ -9,10 +9,11 @@ import com.aerospike.ael.parts.path.BasePath;
 import com.aerospike.ael.util.ParsingUtils;
 
 public class MapKey extends MapPart {
-    private final String key;
+    private final Object key;
 
-    public MapKey(String key) {
+    public MapKey(Object key) {
         super(MapPartType.KEY);
+        requireSupportedKeyType(key, "MapKey");
         this.key = key;
     }
 
@@ -23,7 +24,8 @@ public class MapKey extends MapPart {
     @Override
     public Exp constructExp(BasePath basePath, Exp.Type valueType, int cdtReturnType, CTX[] context) {
         return MapExp.getByKey(cdtReturnType, valueType,
-                Exp.val(key), Exp.bin(basePath.getBinPart().getBinName(), basePath.getBinType()), context);
+                ParsingUtils.objectToExp(key),
+                Exp.bin(basePath.getBinPart().getBinName(), basePath.getBinType()), context);
     }
 
     @Override
