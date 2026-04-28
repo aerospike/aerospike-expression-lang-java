@@ -88,7 +88,7 @@ public class IndexContext {
      * Same as {@link #of(String, Collection)} but applies set-based filtering: only indexes whose
      * {@link Index} {@code setName} equals {@code querySet}, or have no set name, are used for selection.
      *
-     * @param namespace Namespace to be used for creating {@link com.aerospike.dsl.client.query.Filter}.
+     * @param namespace Namespace to be used for creating {@link com.aerospike.ael.client.query.Filter}.
      *                  Must not be null or blank
      * @param querySet  Aerospike set name for the query; null or blank disables set filtering
      * @param indexes   Collection of {@link Index} objects to be used for creating Filter
@@ -103,7 +103,7 @@ public class IndexContext {
      * Create index context with query set and an index-name hint.
      * The hint is resolved only among indexes that match namespace and {@link #indexMatchesQuerySet(Index, String)}.
      *
-     * @param namespace   Namespace to be used for creating {@link com.aerospike.dsl.client.query.Filter}.
+     * @param namespace   Namespace to be used for creating {@link com.aerospike.ael.client.query.Filter}.
      *                    Must not be null or blank
      * @param querySet    Aerospike set name for the query; null or blank disables set filtering
      * @param indexes     Collection of {@link Index} objects to be used for creating Filter
@@ -155,7 +155,7 @@ public class IndexContext {
      * Same behavior as {@link #withBinHint(String, Collection, String)}, but the bin must exist on an index
      * that {@link #indexMatchesQuerySet(Index, String)} allows for {@code querySet}.
      *
-     * @param namespace Namespace to be used for creating {@link com.aerospike.dsl.client.query.Filter}.
+     * @param namespace Namespace to be used for creating {@link com.aerospike.ael.client.query.Filter}.
      *                  Must not be null or blank
      * @param indexes   Collection of {@link Index} objects to be used for creating Filter
      * @param binToUse  The name of the bin whose index should be used
