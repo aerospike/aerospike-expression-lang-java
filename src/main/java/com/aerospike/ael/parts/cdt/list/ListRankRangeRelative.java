@@ -9,9 +9,9 @@ import com.aerospike.ael.client.exp.ListExp;
 import com.aerospike.ael.parts.path.BasePath;
 import com.aerospike.ael.util.ParsingUtils;
 
+import static com.aerospike.ael.util.ParsingUtils.halfOpenRangeCount;
 import static com.aerospike.ael.util.ParsingUtils.objectToExp;
 import static com.aerospike.ael.util.ParsingUtils.parseSignedInt;
-import static com.aerospike.ael.util.ParsingUtils.subtractNullable;
 
 public class ListRankRangeRelative extends ListPart {
     private final boolean isInverted;
@@ -23,7 +23,7 @@ public class ListRankRangeRelative extends ListPart {
         super(ListPartType.RANK_RANGE_RELATIVE);
         this.isInverted = isInverted;
         this.start = start;
-        this.count = subtractNullable(end, start);
+        this.count = halfOpenRangeCount(start, end);
         this.relative = relative;
     }
 
@@ -37,7 +37,7 @@ public class ListRankRangeRelative extends ListPart {
                             : invertedRankRangeRelative.rankRangeRelativeIdentifier();
             boolean isInverted = rankRangeRelative == null;
 
-            Integer start = parseSignedInt(range.start().signedInt());
+            Integer start = range.start() != null ? parseSignedInt(range.start().signedInt()) : null;
             Integer end = null;
             if (range.relativeRankEnd().end() != null) {
                 end = parseSignedInt(range.relativeRankEnd().end().signedInt());
@@ -62,14 +62,14 @@ public class ListRankRangeRelative extends ListPart {
 
         Exp relativeExp = objectToExp(relative);
 
-        Exp startExp = Exp.val(start);
+        Exp valueExp = Exp.val(start != null ? start : 0);
         if (count == null) {
-            return ListExp.getByValueRelativeRankRange(cdtReturnType, startExp, relativeExp,
+            return ListExp.getByValueRelativeRankRange(cdtReturnType, valueExp, relativeExp,
                     Exp.bin(basePath.getBinPart().getBinName(),
                             basePath.getBinType()), context);
         }
 
-        return ListExp.getByValueRelativeRankRange(cdtReturnType, startExp, relativeExp, Exp.val(count),
+        return ListExp.getByValueRelativeRankRange(cdtReturnType, valueExp, relativeExp, Exp.val(count),
                 Exp.bin(basePath.getBinPart().getBinName(),
                         basePath.getBinType()), context);
     }

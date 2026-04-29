@@ -10,8 +10,8 @@ import com.aerospike.ael.parts.path.BasePath;
 
 import com.aerospike.ael.util.ParsingUtils;
 
+import static com.aerospike.ael.util.ParsingUtils.halfOpenRangeCount;
 import static com.aerospike.ael.util.ParsingUtils.parseSignedInt;
-import static com.aerospike.ael.util.ParsingUtils.subtractNullable;
 
 public class MapIndexRangeRelative extends MapPart {
     private final boolean isInverted;
@@ -26,7 +26,7 @@ public class MapIndexRangeRelative extends MapPart {
         }
         this.isInverted = isInverted;
         this.start = start;
-        this.count = subtractNullable(end, start);
+        this.count = halfOpenRangeCount(start, end);
         this.relative = relative;
     }
 
@@ -40,7 +40,7 @@ public class MapIndexRangeRelative extends MapPart {
                             : invertedIndexRangeRelative.indexRangeRelativeIdentifier();
             boolean isInverted = indexRangeRelative == null;
 
-            Integer start = parseSignedInt(range.start().signedInt());
+            Integer start = range.start() != null ? parseSignedInt(range.start().signedInt()) : null;
             Integer end = null;
             if (range.relativeKeyEnd().end() != null) {
                 end = parseSignedInt(range.relativeKeyEnd().end().signedInt());
@@ -62,7 +62,8 @@ public class MapIndexRangeRelative extends MapPart {
         }
 
         Exp keyExp = ParsingUtils.objectToExp(relative);
-        Exp startExp = Exp.val(start);
+        int startIndex = start != null ? start : 0;
+        Exp startExp = Exp.val(startIndex);
         if (count == null) {
             return MapExp.getByKeyRelativeIndexRange(cdtReturnType, keyExp, startExp,
                     Exp.bin(basePath.getBinPart().getBinName(),

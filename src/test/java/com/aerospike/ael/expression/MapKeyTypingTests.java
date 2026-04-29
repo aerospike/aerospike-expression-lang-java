@@ -398,6 +398,13 @@ class MapKeyTypingTests {
         }
 
         @Test
+        void openLowerIntKeyExclusiveUpper() {
+            Exp expected = MapExp.getByKeyRange(MapReturnType.VALUE,
+                    null, Exp.val(55L), Exp.mapBin("bin"));
+            parseFilterExpressionAndCompare(ExpressionContext.of("$.bin.{-55}"), expected);
+        }
+
+        @Test
         void intKeyInRelativeIndex() {
             Exp expected = MapExp.getByKeyRelativeIndexRange(MapReturnType.VALUE,
                     Exp.val(55L), Exp.val(0), Exp.val(1), Exp.mapBin("bin"));

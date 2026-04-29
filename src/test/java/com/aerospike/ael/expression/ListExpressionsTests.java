@@ -401,6 +401,22 @@ class ListExpressionsTests {
                 Exp.val(1),
                 Exp.listBin("listBin1"));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[1:]"), expected);
+
+        // Lower-open [0, n) same as [0:n]
+        expected = ListExp.getByIndexRange(
+                ListReturnType.VALUE,
+                Exp.val(0),
+                Exp.val(3),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[:3]"), expected);
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[0:3]"), expected);
+
+        expected = ListExp.getByIndexRange(
+                ListReturnType.VALUE | ListReturnType.INVERTED,
+                Exp.val(0),
+                Exp.val(3),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[!:3]"), expected);
     }
 
     @Test
@@ -453,6 +469,20 @@ class ListExpressionsTests {
                 null,
                 Exp.listBin("listBin1"));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[=111:]"), expected);
+
+        expected = ListExp.getByValueRange(
+                ListReturnType.VALUE,
+                null,
+                Exp.val(334),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[=:334]"), expected);
+
+        expected = ListExp.getByValueRange(
+                ListReturnType.VALUE | ListReturnType.INVERTED,
+                null,
+                Exp.val(334),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[!=:334]"), expected);
     }
 
     @Test
@@ -582,6 +612,20 @@ class ListExpressionsTests {
                 Exp.listBin("listBin1"));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[#0:3]"), expected);
 
+        expected = ListExp.getByRankRange(
+                ListReturnType.VALUE,
+                Exp.val(0),
+                Exp.val(3),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[#:3]"), expected);
+
+        expected = ListExp.getByRankRange(
+                ListReturnType.VALUE | ListReturnType.INVERTED,
+                Exp.val(0),
+                Exp.val(3),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[!#:3]"), expected);
+
         // Inverted
         expected = ListExp.getByRankRange(
                 ListReturnType.VALUE | ListReturnType.INVERTED,
@@ -615,6 +659,15 @@ class ListExpressionsTests {
                 Exp.val(2),
                 Exp.listBin("listBin1"));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[#-3:-1~b]"), expected);
+
+        expected = ListExp.getByValueRelativeRankRange(
+                ListReturnType.VALUE,
+                Exp.val(0),
+                Exp.val("b"),
+                Exp.val(2),
+                Exp.listBin("listBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[#:2~b]"), expected);
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.listBin1.[#0:2~b]"), expected);
 
         // Inverted
         expected = ListExp.getByValueRelativeRankRange(

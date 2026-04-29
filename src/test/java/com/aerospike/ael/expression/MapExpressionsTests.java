@@ -320,8 +320,9 @@ public class MapExpressionsTests {
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{0xff} == 100"),
                 Exp.eq(MapExp.getByIndex(MapReturnType.VALUE, Exp.Type.INT, Exp.val(255),
                         Exp.mapBin("mapBin1")), Exp.val(100)));
+        // {-0b10}: open upper bound at key 0b10 (=2); mapKeyRange is tried before mapIndex (see keyRangeIdentifier).
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{-0b10} == 100"),
-                Exp.eq(MapExp.getByIndex(MapReturnType.VALUE, Exp.Type.INT, Exp.val(-2),
+                Exp.eq(MapExp.getByKeyRange(MapReturnType.VALUE, null, Exp.val(2L),
                         Exp.mapBin("mapBin1")), Exp.val(100)));
     }
 
@@ -460,6 +461,27 @@ public class MapExpressionsTests {
                 Exp.mapBin("mapBin1"));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{a-}"), expected);
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{\"a\"-}"), expected);
+
+        // Open lower bound (exclusive upper key)
+        expected = MapExp.getByKeyRange(
+                MapReturnType.VALUE,
+                null,
+                Exp.val("z"),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{-z}"), expected);
+        expected = MapExp.getByKeyRange(
+                MapReturnType.VALUE,
+                null,
+                Exp.val(55L),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{-55}"), expected);
+
+        expected = MapExp.getByKeyRange(
+                MapReturnType.VALUE | MapReturnType.INVERTED,
+                null,
+                Exp.val("z"),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{!-z}"), expected);
     }
 
     @Test
@@ -511,6 +533,23 @@ public class MapExpressionsTests {
                 Exp.val(1),
                 Exp.mapBin("mapBin1"));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{1:}"), expected);
+
+        // Lower-open [0, n) same as {0:n}
+        expected = MapExp.getByIndexRange(
+                MapReturnType.VALUE,
+                Exp.val(0),
+                Exp.val(3),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{:3}"), expected);
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{0:3}"), expected);
+
+        // Inverted lower-open
+        expected = MapExp.getByIndexRange(
+                MapReturnType.VALUE | MapReturnType.INVERTED,
+                Exp.val(0),
+                Exp.val(3),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{!:3}"), expected);
     }
 
     @Test
@@ -562,6 +601,21 @@ public class MapExpressionsTests {
                 null,
                 Exp.mapBin("mapBin1"));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=111:}"), expected);
+
+        // Open lower bound (values strictly below end)
+        expected = MapExp.getByValueRange(
+                MapReturnType.VALUE,
+                null,
+                Exp.val(334),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{=:334}"), expected);
+
+        expected = MapExp.getByValueRange(
+                MapReturnType.VALUE | MapReturnType.INVERTED,
+                null,
+                Exp.val(334),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{!=:334}"), expected);
     }
 
     @Test
@@ -691,6 +745,21 @@ public class MapExpressionsTests {
                 Exp.mapBin("mapBin1"));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{#0:3}"), expected);
 
+        // Lower-open same as {#0:n}
+        expected = MapExp.getByRankRange(
+                MapReturnType.VALUE,
+                Exp.val(0),
+                Exp.val(3),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{#:3}"), expected);
+
+        expected = MapExp.getByRankRange(
+                MapReturnType.VALUE | MapReturnType.INVERTED,
+                Exp.val(0),
+                Exp.val(3),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{!#:3}"), expected);
+
         // Inverted
         expected = MapExp.getByRankRange(
                 MapReturnType.VALUE | MapReturnType.INVERTED,
@@ -725,6 +794,16 @@ public class MapExpressionsTests {
                 Exp.mapBin("mapBin1"));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{#-1:1~10}"), expected);
 
+        // Lower-open same as {#0:1~10}
+        expected = MapExp.getByValueRelativeRankRange(
+                MapReturnType.VALUE,
+                Exp.val(0),
+                Exp.val(10),
+                Exp.val(1),
+                Exp.mapBin("mapBin1"));
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{#:1~10}"), expected);
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{#0:1~10}"), expected);
+
         // Inverted
         expected = MapExp.getByValueRelativeRankRange(
                 MapReturnType.VALUE | MapReturnType.INVERTED,
@@ -752,6 +831,7 @@ public class MapExpressionsTests {
                 Exp.val(1),
                 Exp.mapBin("mapBin1"));
         TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{0:1~a}"), expected);
+        TestUtils.parseFilterExpressionAndCompare(ExpressionContext.of("$.mapBin1.{:1~a}"), expected);
 
         // Inverted
         expected = MapExp.getByKeyRelativeIndexRange(

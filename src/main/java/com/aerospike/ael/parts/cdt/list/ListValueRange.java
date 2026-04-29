@@ -8,8 +8,9 @@ import com.aerospike.ael.client.exp.Exp;
 import com.aerospike.ael.client.exp.ListExp;
 import com.aerospike.ael.parts.path.BasePath;
 
+import com.aerospike.ael.util.ParsingUtils;
+
 import static com.aerospike.ael.util.ParsingUtils.objectToExp;
-import static com.aerospike.ael.util.ParsingUtils.parseValueIdentifier;
 import static com.aerospike.ael.util.ParsingUtils.requireSupportedExpValue;
 
 public class ListValueRange extends ListPart {
@@ -19,9 +20,14 @@ public class ListValueRange extends ListPart {
 
     public ListValueRange(boolean isInverted, Object start, Object end) {
         super(ListPartType.VALUE_RANGE);
-        requireSupportedExpValue(start, "ListValueRange start");
+        if (start != null) {
+            requireSupportedExpValue(start, "ListValueRange start");
+        }
         if (end != null) {
             requireSupportedExpValue(end, "ListValueRange end");
+        }
+        if (start == null && end == null) {
+            throw new AelParseException("ListValueRange requires at least one bound");
         }
         this.isInverted = isInverted;
         this.start = start;
@@ -37,14 +43,8 @@ public class ListValueRange extends ListPart {
                     valueRange != null ? valueRange.valueRangeIdentifier() : invertedValueRange.valueRangeIdentifier();
             boolean isInverted = valueRange == null;
 
-            Object startValue = parseValueIdentifier(range.valueIdentifier(0));
-
-            Object endValue = null;
-            if (range.valueIdentifier(1) != null) {
-                endValue = parseValueIdentifier(range.valueIdentifier(1));
-            }
-
-            return new ListValueRange(isInverted, startValue, endValue);
+            ParsingUtils.NullableEndpoints<Object> bounds = ParsingUtils.parseValueRangeEndpoints(range);
+            return new ListValueRange(isInverted, bounds.start(), bounds.end());
         }
         throw new AelParseException("Could not translate ListValueRange from ctx: %s".formatted(ctx));
     }
@@ -55,7 +55,7 @@ public class ListValueRange extends ListPart {
             cdtReturnType = cdtReturnType | ListReturnType.INVERTED;
         }
 
-        Exp startExp = objectToExp(start);
+        Exp startExp = start != null ? objectToExp(start) : null;
         Exp endExp = end != null ? objectToExp(end) : null;
 
         return ListExp.getByValueRange(cdtReturnType, startExp, endExp, Exp.bin(basePath.getBinPart().getBinName(),

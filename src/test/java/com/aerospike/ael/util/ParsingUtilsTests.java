@@ -6,8 +6,14 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import com.aerospike.ael.parts.cdt.list.ListValueRange;
+import com.aerospike.ael.parts.cdt.map.MapKeyRange;
+import com.aerospike.ael.parts.cdt.map.MapValueRange;
+
+import static com.aerospike.ael.util.ParsingUtils.halfOpenRangeCount;
 import static com.aerospike.ael.util.ParsingUtils.objectToExp;
 import static com.aerospike.ael.util.ParsingUtils.requireSupportedExpValue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -89,6 +95,55 @@ class ParsingUtilsTests {
                     .isInstanceOf(AelParseException.class)
                     .hasMessageContaining("Unsupported value type for Exp conversion")
                     .hasMessageContaining("Double");
+        }
+    }
+
+    @Nested
+    class HalfOpenRangeCount {
+
+        @Test
+        void endNullYieldsNullForTailSemantics() {
+            assertThat(halfOpenRangeCount(1, null)).isNull();
+        }
+
+        @Test
+        void startNullYieldsEndForOpenLower() {
+            assertThat(halfOpenRangeCount(null, 3)).isEqualTo(3);
+        }
+
+        @Test
+        void bothSetYieldsDifference() {
+            assertThat(halfOpenRangeCount(1, 3)).isEqualTo(2);
+        }
+
+        @Test
+        void invertedSpanIsNegative() {
+            assertThat(halfOpenRangeCount(5, 2)).isEqualTo(-3);
+        }
+    }
+
+    @Nested
+    class OpenRangePartConstructors {
+
+        @Test
+        void mapKeyRange_rejectsBothBoundsNull() {
+            assertThatThrownBy(() -> new MapKeyRange(false, null, null))
+                    .isInstanceOf(AelParseException.class)
+                    .hasMessageContaining("MapKeyRange requires at least one bound");
+        }
+
+        @Test
+        void mapValueRange_rejectsBothBoundsNull() {
+            assertThatThrownBy(() -> new MapValueRange(false, null, null))
+                    .isInstanceOf(AelParseException.class)
+                    .hasMessageContaining("MapValueRange requires at least one bound");
+        }
+
+        @Test
+        void listValueRange_rejectsBothBoundsNull() {
+            assertThatThrownBy(() -> new ListValueRange(false, null, null))
+                    .isInstanceOf(AelParseException.class)
+                    .hasMessageContaining("ListValueRange requires at least one bound");
         }
     }
 }

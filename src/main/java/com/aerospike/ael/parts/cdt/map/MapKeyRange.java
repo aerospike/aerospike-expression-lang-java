@@ -10,8 +10,6 @@ import com.aerospike.ael.parts.path.BasePath;
 
 import com.aerospike.ael.util.ParsingUtils;
 
-import java.util.Optional;
-
 public class MapKeyRange extends MapPart {
     private final boolean isInverted;
     private final Object start;
@@ -19,9 +17,14 @@ public class MapKeyRange extends MapPart {
 
     public MapKeyRange(boolean isInverted, Object start, Object end) {
         super(MapPartType.KEY_RANGE);
-        requireSupportedKeyType(start, "MapKeyRange start");
+        if (start != null) {
+            requireSupportedKeyType(start, "MapKeyRange start");
+        }
         if (end != null) {
             requireSupportedKeyType(end, "MapKeyRange end");
+        }
+        if (start == null && end == null) {
+            throw new AelParseException("MapKeyRange requires at least one bound");
         }
         this.isInverted = isInverted;
         this.start = start;
@@ -37,13 +40,8 @@ public class MapKeyRange extends MapPart {
                     keyRange != null ? keyRange.keyRangeIdentifier() : invertedKeyRange.keyRangeIdentifier();
             boolean isInverted = keyRange == null;
 
-            Object startKey = ParsingUtils.parseMapKey(range.mapKey(0));
-
-            Object endKey = Optional.ofNullable(range.mapKey(1))
-                    .map(ParsingUtils::parseMapKey)
-                    .orElse(null);
-
-            return new MapKeyRange(isInverted, startKey, endKey);
+            ParsingUtils.NullableEndpoints<Object> bounds = ParsingUtils.parseMapKeyRangeEndpoints(range);
+            return new MapKeyRange(isInverted, bounds.start(), bounds.end());
         }
         throw new AelParseException("Could not translate MapKeyRange from ctx: %s".formatted(ctx));
     }
@@ -54,7 +52,7 @@ public class MapKeyRange extends MapPart {
             cdtReturnType = cdtReturnType | MapReturnType.INVERTED;
         }
 
-        Exp startExp = ParsingUtils.objectToExp(start);
+        Exp startExp = start != null ? ParsingUtils.objectToExp(start) : null;
         Exp endExp = end != null ? ParsingUtils.objectToExp(end) : null;
 
         return MapExp.getByKeyRange(cdtReturnType, startExp, endExp, Exp.bin(basePath.getBinPart().getBinName(),

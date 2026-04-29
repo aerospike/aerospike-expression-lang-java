@@ -8,8 +8,8 @@ import com.aerospike.ael.client.exp.Exp;
 import com.aerospike.ael.client.exp.MapExp;
 import com.aerospike.ael.parts.path.BasePath;
 
+import static com.aerospike.ael.util.ParsingUtils.halfOpenRangeCount;
 import static com.aerospike.ael.util.ParsingUtils.parseSignedInt;
-import static com.aerospike.ael.util.ParsingUtils.subtractNullable;
 
 public class MapRankRange extends MapPart {
     private final boolean isInverted;
@@ -20,7 +20,7 @@ public class MapRankRange extends MapPart {
         super(MapPartType.RANK_RANGE);
         this.isInverted = isInverted;
         this.start = start;
-        this.count = subtractNullable(end, start);
+        this.count = halfOpenRangeCount(start, end);
     }
 
     public static MapRankRange from(ConditionParser.MapRankRangeContext ctx) {
@@ -32,11 +32,8 @@ public class MapRankRange extends MapPart {
                     rankRange != null ? rankRange.rankRangeIdentifier() : invertedRankRange.rankRangeIdentifier();
             boolean isInverted = rankRange == null;
 
-            Integer start = parseSignedInt(range.start().signedInt());
-            Integer end = null;
-            if (range.end() != null) {
-                end = parseSignedInt(range.end().signedInt());
-            }
+            Integer start = range.start() != null ? parseSignedInt(range.start().signedInt()) : null;
+            Integer end = range.end() != null ? parseSignedInt(range.end().signedInt()) : null;
 
             return new MapRankRange(isInverted, start, end);
         }
@@ -49,7 +46,8 @@ public class MapRankRange extends MapPart {
             cdtReturnType = cdtReturnType | MapReturnType.INVERTED;
         }
 
-        Exp startExp = Exp.val(start);
+        int startRank = start != null ? start : 0;
+        Exp startExp = Exp.val(startRank);
         if (count == null) {
             return MapExp.getByRankRange(cdtReturnType, startExp, Exp.bin(basePath.getBinPart().getBinName(),
                     basePath.getBinType()), context);

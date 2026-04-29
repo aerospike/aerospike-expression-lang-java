@@ -3,7 +3,6 @@ package com.aerospike.ael.util;
 import com.aerospike.ael.ConditionParser;
 import com.aerospike.ael.AelParseException;
 import com.aerospike.ael.client.exp.Exp;
-import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -294,12 +293,69 @@ public class ParsingUtils {
     }
 
     /**
-     * @param a Integer, can be null
-     * @param b Integer, non-null
-     * @return a - b if a != null, otherwise null
+     * Length of half-open interval {@code [start, end)} for CDT index/rank {@code count} arguments,
+     * consistent with closed {@code {s:e}} parsing ({@code end} exclusive).
+     *
+     * @param start inclusive lower bound; {@code null} means absolute index/rank {@code 0} for span purposes
+     * @param end exclusive upper bound; {@code null} means upper-unbounded (tail selection)
+     * @return {@code end - start} when both finite; {@code end} when {@code start} is null; {@code null} when {@code end} is null
+     * @implNote When both {@code start} and {@code end} are non-null but {@code start > end}, the result is negative.
+     * The grammar does not validate ordering; callers {@link com.aerospike.ael.parts.cdt.map.MapIndexRange} forward this
+     * to Aerospike CDT APIs as with closed ranges.
      */
-    public static Integer subtractNullable(Integer a, @NonNull Integer b) {
-        return a == null ? null : a - b;
+    public static Integer halfOpenRangeCount(Integer start, Integer end) {
+        if (end == null) {
+            return null;
+        }
+        if (start == null) {
+            return end;
+        }
+        return end - start;
+    }
+
+    /**
+     * Parses {@link ConditionParser.KeyRangeIdentifierContext}: two keys, open upper ({@code key-}), or open lower ({@code -key}).
+     */
+    public static NullableEndpoints<Object> parseMapKeyRangeEndpoints(ConditionParser.KeyRangeIdentifierContext range) {
+        int keyCount = range.mapKey().size();
+        if (keyCount == 2) {
+            return new NullableEndpoints<>(parseMapKey(range.mapKey(0)), parseMapKey(range.mapKey(1)));
+        }
+        if (keyCount == 1) {
+            if (range.getChild(0) instanceof ConditionParser.MapKeyContext) {
+                return new NullableEndpoints<>(parseMapKey(range.mapKey(0)), null);
+            }
+            return new NullableEndpoints<>(null, parseMapKey(range.mapKey(0)));
+        }
+        throw new AelParseException("Could not parse map key range identifier: %s".formatted(range.getText()));
+    }
+
+    /**
+     * Parses {@link ConditionParser.ValueRangeIdentifierContext}: two values, open upper ({@code v:}), or open lower ({@code :v}).
+     */
+    public static NullableEndpoints<Object> parseValueRangeEndpoints(ConditionParser.ValueRangeIdentifierContext range) {
+        int n = range.valueIdentifier().size();
+        if (n == 2) {
+            return new NullableEndpoints<>(
+                    parseValueIdentifier(range.valueIdentifier(0)),
+                    parseValueIdentifier(range.valueIdentifier(1)));
+        }
+        if (n == 1) {
+            if (range.getChild(0) instanceof ConditionParser.ValueIdentifierContext) {
+                return new NullableEndpoints<>(parseValueIdentifier(range.valueIdentifier(0)), null);
+            }
+            return new NullableEndpoints<>(null, parseValueIdentifier(range.valueIdentifier(0)));
+        }
+        throw new AelParseException("Could not parse value range identifier: %s".formatted(range.getText()));
+    }
+
+    /**
+     * Nullable inclusive/exclusive endpoints for map key or value interval parsing.
+     *
+     * @param start inclusive lower bound for keys/values (CDT wire: null begin allowed)
+     * @param end exclusive upper bound (null end allowed)
+     */
+    public record NullableEndpoints<T>(T start, T end) {
     }
 
     /**

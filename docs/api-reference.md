@@ -78,6 +78,16 @@ Represents an available secondary index for optimization.
     * Must be non-negative (`>= 0`).
     * Providing a realistic, non-negative cardinality value is recommended for better automatic index selection (indexes with higher `binValuesRatio` are preferred).
 
+## CDT path segments and ranges
+
+Expressions may use **closed-boundaries** and **half-open CDT ranges** on maps and lists. Details in the 
+[Guide: Working with Lists and Maps — CDT ranges](guides/02-working-with-lists-and-maps.md#cdt-ranges).
+
+The **`parseCTX`** API accepts the same surface syntax as paths embedded in expressions, 
+but **only simple selectors** produce `CTX[]` (single key, index, value, rank, etc.). 
+**Range segments** (index/value/key intervals) are not converted to context entries and will fail with an error 
+indicating that context is not supported for that part type.
+
 ## Example API Flow
 
 Here is a recap of how the classes work together in a typical use case:
