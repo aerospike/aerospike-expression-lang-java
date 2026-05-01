@@ -86,6 +86,45 @@ Expression filter = Exp.build(parsed.getResult().getExp());
 
 The `when` structure enables you to push complex conditional logic directly to the server, reducing the need to pull data to the client for evaluation and minimizing data transfer.
 
+## Error Handling: `unknown` and `error`
+
+The `unknown` keyword produces an expression that throws a server-side exception whenever it is evaluated. While primarily useful in `when` branches to signal that a particular condition should never occur, `unknown`/`error` is syntactically valid in any expression position (e.g., `$.a == unknown`, `unknown + 1`). Outside a guarded `when` branch, it will cause a server-side exception on evaluation.
+
+The `error` keyword is syntactic sugar for `unknown` -- both compile to the same underlying expression (`Exp.unknown()`). Use whichever reads better in your context: `error` may be clearer when the intent is to signal a failure, while `unknown` matches the underlying Aerospike Exp API name.
+
+### Example: Fail on Default
+
+Return a map bin if its size exceeds 5, otherwise throw a server-side exception:
+
+```
+when($.mapBin.{}.count() > 5 => $.mapBin, default => unknown)
+```
+
+Or equivalently with `error`:
+
+```
+when($.mapBin.{}.count() > 5 => $.mapBin, default => error)
+```
+
+### Example: Fail on Specific Branch
+
+You can also use `unknown`/`error` in a non-default branch:
+
+```
+when($.status == 0 => error, $.status == 1 => 'active', default => 'inactive')
+```
+
+### Using as a Bin Name
+
+Since `unknown` and `error` are reserved keywords, they are interpreted as expressions (not bin names) when used without the `$.` prefix. To reference bins named `unknown` or `error`, use the `$.` prefix:
+
+```
+$.unknown == 5
+$.error == 10
+```
+
+Quoted forms are also supported and equivalent: `$.'unknown'`, `$."error"`.
+
 ## Control Structure `let`
 
 The basic structure of a let expression allows you to declare temporary variables and use them within a subsequent expression:

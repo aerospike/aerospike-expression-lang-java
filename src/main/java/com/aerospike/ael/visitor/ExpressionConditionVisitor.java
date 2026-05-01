@@ -97,42 +97,46 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
             return visit(ctx.comparisonExpression(0));
         }
 
-        List<ExpressionContainer> expressions = new ArrayList<>();
+        List<AbstractPart> expressions = new ArrayList<>();
         for (ConditionParser.ComparisonExpressionContext ec : ctx.comparisonExpression()) {
-            ExpressionContainer expr = (ExpressionContainer) visit(ec);
-            if (expr == null) return null;
+            AbstractPart part = visit(ec);
+            if (part == null) return null;
 
-            logicalSetBinAsBooleanExpr(expr);
-            expressions.add(expr);
+            if (part instanceof ExpressionContainer ec2) {
+                logicalSetBinAsBooleanExpr(ec2);
+            }
+            expressions.add(part);
         }
         return new ExpressionContainer(new AndStructure(expressions), ExpressionContainer.ExprPartsOperation.AND_STRUCTURE);
     }
 
     @Override
     public AbstractPart visitOrExpression(ConditionParser.OrExpressionContext ctx) {
-        // If there's only one andExpression and no 'or' operators, just pass through
         if (ctx.logicalAndExpression().size() == 1) {
             return visit(ctx.logicalAndExpression(0));
         }
 
-        List<ExpressionContainer> expressions = new ArrayList<>();
-        // iterate through each sub-expression
+        List<AbstractPart> expressions = new ArrayList<>();
         for (ConditionParser.LogicalAndExpressionContext ec : ctx.logicalAndExpression()) {
-            ExpressionContainer expr = (ExpressionContainer) visit(ec);
-            if (expr == null) return null;
+            AbstractPart part = visit(ec);
+            if (part == null) return null;
 
-            logicalSetBinAsBooleanExpr(expr);
-            expressions.add(expr);
+            if (part instanceof ExpressionContainer ec2) {
+                logicalSetBinAsBooleanExpr(ec2);
+            }
+            expressions.add(part);
         }
         return new ExpressionContainer(new OrStructure(expressions), ExpressionContainer.ExprPartsOperation.OR_STRUCTURE);
     }
 
     @Override
     public AbstractPart visitNotExpression(ConditionParser.NotExpressionContext ctx) {
-        ExpressionContainer expr = (ExpressionContainer) visit(ctx.expression());
+        AbstractPart part = visit(ctx.expression());
 
-        logicalSetBinAsBooleanExpr(expr);
-        return new ExpressionContainer(expr, ExpressionContainer.ExprPartsOperation.NOT);
+        if (part instanceof ExpressionContainer ec) {
+            logicalSetBinAsBooleanExpr(ec);
+        }
+        return new ExpressionContainer(part, ExpressionContainer.ExprPartsOperation.NOT);
     }
 
     @Override
@@ -140,12 +144,13 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
         if (ctx.expression().size() < 2) {
             throw new AelParseException("Exclusive logical operator requires 2 or more expressions");
         }
-        List<ExpressionContainer> expressions = new ArrayList<>();
-        // iterate through each sub-expression
+        List<AbstractPart> expressions = new ArrayList<>();
         for (ConditionParser.ExpressionContext ec : ctx.expression()) {
-            ExpressionContainer expr = (ExpressionContainer) visit(ec);
-            logicalSetBinAsBooleanExpr(expr);
-            expressions.add(expr);
+            AbstractPart part = visit(ec);
+            if (part instanceof ExpressionContainer ec2) {
+                logicalSetBinAsBooleanExpr(ec2);
+            }
+            expressions.add(part);
         }
         return new ExpressionContainer(new ExclusiveStructure(expressions),
                 ExpressionContainer.ExprPartsOperation.EXCLUSIVE_STRUCTURE);
@@ -513,7 +518,8 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
             AbstractPart.PartType.STRING_OPERAND,
             AbstractPart.PartType.MAP_OPERAND,
             AbstractPart.PartType.METADATA_OPERAND,
-            AbstractPart.PartType.BLOB_OPERAND
+            AbstractPart.PartType.BLOB_OPERAND,
+            AbstractPart.PartType.UNKNOWN_OPERAND
     );
 
     private static boolean isNotList(AbstractPart part) {
@@ -805,6 +811,11 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
     }
 
     @Override
+    public AbstractPart visitPathFunctionExists(ConditionParser.PathFunctionExistsContext ctx) {
+        return new PathFunction(PathFunction.PathFunctionType.EXISTS, PathFunction.ReturnParam.EXISTS, null);
+    }
+
+    @Override
     public AbstractPart visitPathFunctionCast(ConditionParser.PathFunctionCastContext ctx) {
         String typeVal = extractTypeFromMethod(ctx.PATH_FUNCTION_CAST().getText());
         PathFunction.CastType castType = PathFunction.CastType.valueOf(typeVal.toUpperCase());
@@ -858,8 +869,8 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
             rejectBinNameContainingNull(binName);
             return new BinPart(binName);
         }
-        // Fallthrough: NAME_IDENTIFIER, IN, TRUE, FALSE, and all keyword literals ('and', 'or',
-        // 'not', etc.). ctx.getText() returns the matched text preserving original case.
+        // Fallthrough: NAME_IDENTIFIER, IN, and reservedWord alternatives.
+        // ctx.getText() returns the matched text preserving original case.
         String binName = ctx.getText();
         rejectBinNameContainingNull(binName);
         return new BinPart(binName);
@@ -885,6 +896,7 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
                     "Bin name must not contain the reserved word 'null': " + binName);
         }
     }
+
 
     @Override
     public AbstractPart visitOperandExpression(ConditionParser.OperandExpressionContext ctx) {
@@ -1025,6 +1037,11 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
     }
 
     @Override
+    public AbstractPart visitUnknownExpression(ConditionParser.UnknownExpressionContext ctx) {
+        return new UnknownOperand();
+    }
+
+    @Override
     public AbstractPart visitPlaceholder(ConditionParser.PlaceholderContext ctx) {
         // Extract index from the placeholder
         String placeholderText = ctx.getText();
@@ -1069,6 +1086,13 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
         BasePath basePath = (BasePath) visit(ctx.basePath());
         PathFunction pathFunction = visitPathFunctionIfPresent(ctx);
 
+        if (pathFunction != null && pathFunction.getPathFunctionType() == PathFunction.PathFunctionType.EXISTS) {
+            if (basePath.getCdtParts().isEmpty()) {
+                return buildBinExists(basePath.getBinPart());
+            }
+            return buildCdtExists(basePath, pathFunction);
+        }
+
         if (!basePath.getCdtParts().isEmpty()
                 || pathFunction != null && pathFunction.getPathFunctionType() == PathFunction.PathFunctionType.COUNT) {
             return new Path(basePath, pathFunction);
@@ -1084,6 +1108,15 @@ public class ExpressionConditionVisitor extends ConditionBaseVisitor<AbstractPar
 
     private PathFunction visitPathFunctionIfPresent(ConditionParser.PathContext ctx) {
         return ctx.pathFunction() != null ? (PathFunction) visit(ctx.pathFunction()) : null;
+    }
+
+    private AbstractPart buildBinExists(BinPart binPart) {
+        return new ExpressionContainer(binPart, ExpressionContainer.ExprPartsOperation.EXISTS);
+    }
+
+    private AbstractPart buildCdtExists(BasePath basePath, PathFunction pathFunction) {
+        return new ExpressionContainer(
+                new Path(basePath, pathFunction), ExpressionContainer.ExprPartsOperation.EXISTS);
     }
 
     private AbstractPart buildBinCast(BinPart binPart, PathFunction pathFunction) {

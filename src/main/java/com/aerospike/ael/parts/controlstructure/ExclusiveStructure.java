@@ -1,7 +1,6 @@
 package com.aerospike.ael.parts.controlstructure;
 
 import com.aerospike.ael.parts.AbstractPart;
-import com.aerospike.ael.parts.ExpressionContainer;
 import lombok.Getter;
 
 import java.util.List;
@@ -9,9 +8,9 @@ import java.util.List;
 @Getter
 public class ExclusiveStructure extends AbstractPart {
 
-    private final List<ExpressionContainer> operands;
+    private final List<AbstractPart> operands;
 
-    public ExclusiveStructure(List<ExpressionContainer> operands) {
+    public ExclusiveStructure(List<AbstractPart> operands) {
         super(PartType.EXCLUSIVE_STRUCTURE);
         this.operands = operands;
     }

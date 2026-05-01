@@ -139,6 +139,18 @@ class CtxTests {
     }
 
     @Test
+    void existsPathFunctionRejected() {
+        assertThatThrownBy(() -> parseCtx("$.mapBin1.a.exists()"))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("Could not parse the given AEL path input")
+                .hasStackTraceContaining("Unsupported input expression type 'EXPRESSION_CONTAINER'");
+        assertThatThrownBy(() -> parseCtx("$.listBin1.[0].exists()"))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("Could not parse the given AEL path input")
+                .hasStackTraceContaining("Unsupported input expression type 'EXPRESSION_CONTAINER'");
+    }
+
+    @Test
     void mapExpression_oneLevel_withPathFunction() {
         assertThatThrownBy(() -> parseCtx("$.mapBin1.a.get(type: INT)"))
                 .isInstanceOf(AelParseException.class)

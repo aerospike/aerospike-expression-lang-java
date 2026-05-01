@@ -488,8 +488,8 @@ public class ArithmeticExpressionsTests {
     // --- Negative / error tests for functions ---
 
     @Test
-    void negativeUnknownFunction() {
-        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("unknown($.a) == 5")))
+    void negativeUndefinedFunction() {
+        assertThatThrownBy(() -> parseFilterExp(ExpressionContext.of("xyz($.a) == 5")))
                 .isInstanceOf(AelParseException.class)
                 .hasMessageContaining("Unknown function");
     }

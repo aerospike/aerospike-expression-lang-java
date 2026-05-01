@@ -94,6 +94,7 @@ operand
     | exclusiveExpression
     | letExpression
     | whenExpression
+    | unknownExpression
     ;
 
 notExpression: 'not' '(' expression ')';
@@ -103,6 +104,8 @@ exclusiveExpression: 'exclusive' '(' expression (',' expression)+ ')';
 letExpression: 'let' '(' variableDefinition (',' variableDefinition)* ')' 'then' '(' expression ')';
 
 whenExpression: 'when' '(' expressionMapping (',' expressionMapping)* ',' 'default' '=>' expression ')';
+
+unknownExpression: 'unknown' | 'error';
 
 functionCall
     : NAME_IDENTIFIER '(' expression (',' expression)* ')'
@@ -233,12 +236,8 @@ PATH_FUNCTION_CDT_RETURN_TYPE
     | 'REVERSE_RANK'
     ;
 
-binPart
-    : BIN_IDENTIFIER
-    | NAME_IDENTIFIER
-    | QUOTED_STRING
-    | IN
-    | TRUE
+reservedWord
+    : TRUE
     | FALSE
     | PATH_FUNCTION_GET
     | PATH_FUNCTION_PARAM_TYPE
@@ -258,6 +257,16 @@ binPart
     | 'increment'
     | 'clear'
     | 'sort'
+    | 'unknown'
+    | 'error'
+    ;
+
+binPart
+    : BIN_IDENTIFIER
+    | NAME_IDENTIFIER
+    | QUOTED_STRING
+    | IN
+    | reservedWord
     ;
 
 mapPart
@@ -285,6 +294,7 @@ mapKey
     | INT
     | BLOB_LITERAL
     | B64_LITERAL
+    | reservedWord
     ;
 
 mapValue: '{=' valueIdentifier '}';
@@ -546,6 +556,7 @@ valueIdentifier
     | IN
     | BLOB_LITERAL
     | B64_LITERAL
+    | reservedWord
     ;
 
 valueListIdentifier: valueIdentifier ',' valueIdentifier (',' valueIdentifier)*;
