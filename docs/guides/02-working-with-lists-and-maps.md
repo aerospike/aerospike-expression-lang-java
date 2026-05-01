@@ -216,3 +216,32 @@ To find records where the `devices` list contains more than 1 item:
 "$.devices.count() > 1"
 ```
 You can also see this written as `$.devices.[].count() > 1`, which is equivalent.
+
+### Checking Element Existence with `exists()`
+
+The `exists()` function returns a boolean indicating whether a bin or CDT element exists.
+
+**Bin-level:** Check if a bin exists in the record:
+```
+"$.user.exists()"
+```
+
+**CDT-level:** Check if a specific key exists in a map:
+```
+"$.user.email.exists()"
+```
+
+Check if a list index exists:
+```
+"$.scores.[0].exists()"
+```
+
+**Combining with other expressions:** `exists()` is a boolean predicate that works in logical expressions:
+```
+"$.user.exists() and $.user.logins > 100"
+```
+
+**Guarding against missing bins with `when`:** Use `exists()` to safely access bins that may not be present:
+```
+"when($.user.exists() => $.user.logins, default => 0)"
+```

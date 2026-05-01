@@ -37,7 +37,7 @@ public class Path extends AbstractPart {
 
         if (lastPathPart != null) {
             Exp exp = switch (pathFunction.getPathFunctionType()) {
-                case GET, COUNT, CAST -> processGet(basePath, lastPathPart, valueType, cdtReturnType);
+                case GET, COUNT, CAST, EXISTS -> processGet(basePath, lastPathPart, valueType, cdtReturnType);
                 case SIZE -> processSize(basePath, lastPathPart, valueType, cdtReturnType);
             };
             if (pathFunction.getPathFunctionType() == PathFunction.PathFunctionType.CAST && exp != null) {

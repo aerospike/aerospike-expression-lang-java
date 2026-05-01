@@ -118,4 +118,16 @@ class BinFiltersTests {
         parseFilterAndCompare(ExpressionContext.of("$.and == 1"), indexCtx,
                 Filter.equal("and", 1));
     }
+
+    @Test
+    void existsWithSIFilter() {
+        // exists() combined with an indexed comparison: SI filter should apply to the comparison,
+        // exists() becomes a residual Exp
+        com.aerospike.ael.client.exp.Exp expectedExp = com.aerospike.ael.client.exp.Exp.binExists("a");
+        com.aerospike.ael.util.TestUtils.parseAelExpressionAndCompare(
+                ExpressionContext.of("$.a.exists() and $.intBin1 > 100"),
+                Filter.range("intBin1", 101, Long.MAX_VALUE),
+                expectedExp,
+                INDEX_FILTER_INPUT);
+    }
 }

@@ -1486,6 +1486,13 @@ public class VisitorUtils {
     private static Exp processExpression(ExpressionContainer expr) {
         AbstractPart left = getExistingPart(expr.getLeft(), "Unable to parse left operand");
 
+        if (expr.getOperationType() == EXISTS) {
+            if (left.getPartType() == BIN_PART) {
+                return Exp.binExists(((BinPart) left).getBinName());
+            }
+            return processOperand(left);
+        }
+
         // For unary expressions
         if (expr.isUnary()) {
             Exp operandExp = processOperand(left);
@@ -1942,20 +1949,14 @@ public class VisitorUtils {
             if (part.getPartType() == EXPRESSION_CONTAINER) {
                 ExpressionContainer logicalExpr = (ExpressionContainer) part;
                 if (logicalExpr.isExclFromSecondaryIndexFilter()) {
-                    // All parts of the tree branch excluded from secondary index Filter building are flagged
-                    if (logicalExpr.getLeft().getPartType() == EXPRESSION_CONTAINER) {
-                        ((ExpressionContainer) logicalExpr.getLeft()).isExclFromSecondaryIndexFilter(true);
-                    }
-                    if (logicalExpr.getRight().getPartType() == EXPRESSION_CONTAINER) {
-                        ((ExpressionContainer) logicalExpr.getRight()).isExclFromSecondaryIndexFilter(true);
-                    }
+                    propagateExclFlag(logicalExpr.getLeft());
+                    propagateExclFlag(logicalExpr.getRight());
                     return true;
                 }
                 if (logicalExpr.getOperationType() == AND) return true;
                 if (logicalExpr.getOperationType() == OR) {
-                    // Both parts of OR-combined query are excluded from secondary index Filter building
-                    ((ExpressionContainer) logicalExpr.getLeft()).isExclFromSecondaryIndexFilter(true);
-                    ((ExpressionContainer) logicalExpr.getRight()).isExclFromSecondaryIndexFilter(true);
+                    propagateExclFlag(logicalExpr.getLeft());
+                    propagateExclFlag(logicalExpr.getRight());
                     return true;
                 }
             }
@@ -1964,6 +1965,12 @@ public class VisitorUtils {
 
         traverseTree(expr, binPartRetriever, depth, stopOnLogicalExpr);
         return singleBinPartArray[0];
+    }
+
+    private static void propagateExclFlag(AbstractPart part) {
+        if (part != null && part.getPartType() == EXPRESSION_CONTAINER) {
+            ((ExpressionContainer) part).isExclFromSecondaryIndexFilter(true);
+        }
     }
 
     /**

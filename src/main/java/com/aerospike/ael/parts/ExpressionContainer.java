@@ -85,7 +85,8 @@ public class ExpressionContainer extends AbstractPart {
         WHEN_STRUCTURE, // unary
         EXCLUSIVE_STRUCTURE, // unary
         AND_STRUCTURE,
-        OR_STRUCTURE;
+        OR_STRUCTURE,
+        EXISTS; // unary
 
         // New values not in this set default to "might produce a list" (no false positives).
         private static final EnumSet<ExprPartsOperation> SCALAR = EnumSet.of(
@@ -98,7 +99,8 @@ public class ExpressionContainer extends AbstractPart {
                 TO_INT, TO_FLOAT,
                 EQ, NOTEQ, GT, GTEQ, LT, LTEQ,
                 IN, NOT, AND, OR,
-                AND_STRUCTURE, OR_STRUCTURE, EXCLUSIVE_STRUCTURE
+                AND_STRUCTURE, OR_STRUCTURE, EXCLUSIVE_STRUCTURE,
+                EXISTS
         );
 
         public boolean isScalar() {
