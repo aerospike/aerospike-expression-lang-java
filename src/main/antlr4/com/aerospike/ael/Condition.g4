@@ -274,8 +274,8 @@ mapPart
     | mapKey
     | mapValue
     | mapRank
-    | mapIndex
     | mapKeyRange
+    | mapIndex
     | mapKeyList
     | mapIndexRange
     | mapValueList
@@ -319,6 +319,7 @@ invertedMapKeyRange
 keyRangeIdentifier
     : mapKey '-' mapKey
     | mapKey '-'
+    | '-' mapKey
     ;
 
 mapKeyList
@@ -354,6 +355,7 @@ invertedMapIndexRange
 indexRangeIdentifier
     : start ':' end
     | start ':'
+    | ':' end
     ;
 
 signedInt: '-'? INT;
@@ -390,6 +392,7 @@ invertedMapValueRange
 valueRangeIdentifier
     : valueIdentifier ':' valueIdentifier
     | valueIdentifier ':'
+    | ':' valueIdentifier
     ;
 
 mapRankRange
@@ -408,6 +411,7 @@ invertedMapRankRange
 rankRangeIdentifier
     : start ':' end
     | start ':'
+    | ':' end
     ;
 
 mapRankRangeRelative
@@ -425,6 +429,7 @@ invertedMapRankRangeRelative
 
 rankRangeRelativeIdentifier
     : start ':' relativeRankEnd
+    | ':' relativeRankEnd
     ;
 
 relativeRankEnd
@@ -451,6 +456,7 @@ invertedMapIndexRangeRelative
 
 indexRangeRelativeIdentifier
     : start ':' relativeKeyEnd
+    | ':' relativeKeyEnd
     ;
 
 relativeKeyEnd

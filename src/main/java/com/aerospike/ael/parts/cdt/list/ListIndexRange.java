@@ -8,8 +8,8 @@ import com.aerospike.ael.client.exp.Exp;
 import com.aerospike.ael.client.exp.ListExp;
 import com.aerospike.ael.parts.path.BasePath;
 
+import static com.aerospike.ael.util.ParsingUtils.halfOpenRangeCount;
 import static com.aerospike.ael.util.ParsingUtils.parseSignedInt;
-import static com.aerospike.ael.util.ParsingUtils.subtractNullable;
 
 public class ListIndexRange extends ListPart {
     private final boolean isInverted;
@@ -20,7 +20,7 @@ public class ListIndexRange extends ListPart {
         super(ListPartType.INDEX_RANGE);
         this.isInverted = isInverted;
         this.start = start;
-        this.count = subtractNullable(end, start);
+        this.count = halfOpenRangeCount(start, end);
     }
 
     public static ListIndexRange from(ConditionParser.ListIndexRangeContext ctx) {
@@ -32,11 +32,8 @@ public class ListIndexRange extends ListPart {
                     indexRange != null ? indexRange.indexRangeIdentifier() : invertedIndexRange.indexRangeIdentifier();
             boolean isInverted = indexRange == null;
 
-            Integer start = parseSignedInt(range.start().signedInt());
-            Integer end = null;
-            if (range.end() != null) {
-                end = parseSignedInt(range.end().signedInt());
-            }
+            Integer start = range.start() != null ? parseSignedInt(range.start().signedInt()) : null;
+            Integer end = range.end() != null ? parseSignedInt(range.end().signedInt()) : null;
 
             return new ListIndexRange(isInverted, start, end);
         }
@@ -49,7 +46,8 @@ public class ListIndexRange extends ListPart {
             cdtReturnType = cdtReturnType | ListReturnType.INVERTED;
         }
 
-        Exp startExp = Exp.val(start);
+        int startIndex = start != null ? start : 0;
+        Exp startExp = Exp.val(startIndex);
         if (count == null) {
             return ListExp.getByIndexRange(cdtReturnType, startExp, Exp.bin(basePath.getBinPart().getBinName(),
                     basePath.getBinType()), context);

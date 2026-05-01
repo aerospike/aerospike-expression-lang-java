@@ -83,6 +83,16 @@ Or use the full form of such AEL string if needed:
 "$.user.{0}.get(type: STRING, return: VALUE) == 'Alice'"
 ```
 
+#### CDT ranges
+
+Beyond a single index, you can express **intervals** on CDT keys, values, indexes, and ranks using closed-boundaries 
+or half-open ranges:
+
+- **Map key range** — `{a-c}` selects keys from `a` up to but not including `c`; `{a-}` is open on the upper side; `{-c}` is open on the lower side (all keys strictly below `c`).
+- **Map index / rank range** — `{s:e}` selects index/rank span `[s, e)`; `{s:}` is open on the upper side; `{:e}` is open on the lower side (same span as `{0:e}`).
+- **Map value range** — `{=v:w}`, `{=v:}`, `{=:w}` follow inclusive/exclusive value endpoints per `getByValueRange`.
+- **Lists** — the same shapes use square brackets (`[…]`) instead of braces.
+
 ### Filtering by Map Value
 
 **AEL String:**

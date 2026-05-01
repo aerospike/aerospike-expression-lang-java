@@ -3,7 +3,6 @@ package com.aerospike.ael.util;
 import com.aerospike.ael.ConditionParser;
 import com.aerospike.ael.AelParseException;
 import com.aerospike.ael.client.exp.Exp;
-import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -16,6 +15,8 @@ public class ParsingUtils {
     private static final BigInteger LONG_MIN_ABS = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE);
     private static final BigInteger INT_MIN_VALUE = BigInteger.valueOf(Integer.MIN_VALUE);
     private static final BigInteger INT_MAX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
+    private static final BigInteger LONG_MIN_VALUE = BigInteger.valueOf(Long.MIN_VALUE);
+    private static final BigInteger LONG_MAX_VALUE = BigInteger.valueOf(Long.MAX_VALUE);
 
     /**
      * Extracts a signed integer value from a {@code signedInt} parser rule context.
@@ -35,6 +36,25 @@ public class ParsingUtils {
             throw new AelParseException("Signed integer literal out of range for INT: " + ctx.getText());
         }
         return signedValue.intValue();
+    }
+
+    /**
+     * Extracts a signed long value from a {@code signedInt} parser rule context.
+     * Same grammar rule as {@link #parseSignedInt} ({@code signedInt: '-'? INT;}),
+     * but validates against the full 64-bit signed range.
+     *
+     * @param ctx The signedInt context from the parser
+     * @return The parsed long value, negated if a '-' prefix is present
+     */
+    public static long parseSignedLong(ConditionParser.SignedIntContext ctx) {
+        String intText = ctx.INT().getText();
+        boolean isNegative = ctx.getText().startsWith("-");
+        BigInteger value = parseUnsignedIntegerLiteral(intText);
+        BigInteger signedValue = isNegative ? value.negate() : value;
+        if (signedValue.compareTo(LONG_MIN_VALUE) < 0 || signedValue.compareTo(LONG_MAX_VALUE) > 0) {
+            throw new AelParseException("Signed integer literal out of range for LONG: " + ctx.getText());
+        }
+        return signedValue.longValue();
     }
 
     /**
@@ -149,10 +169,11 @@ public class ParsingUtils {
 
     /**
      * Extracts a typed value from a {@code valueIdentifier} parser rule context.
-     * Handles NAME_IDENTIFIER, QUOTED_STRING, IN keyword (as literal text), and signedInt.
+     * Handles NAME_IDENTIFIER, QUOTED_STRING, IN keyword (as literal text), signedInt,
+     * BLOB_LITERAL, and B64_LITERAL.
      *
      * @param ctx The valueIdentifier context from the parser
-     * @return The parsed value as String or Integer
+     * @return The parsed value as String, Long, or byte[]
      */
     public static Object parseValueIdentifier(ConditionParser.ValueIdentifierContext ctx) {
         String result = resolveStringToken(ctx);
@@ -160,7 +181,7 @@ public class ParsingUtils {
             return result;
         }
         if (ctx.signedInt() != null) {
-            return parseSignedInt(ctx.signedInt());
+            return parseSignedLong(ctx.signedInt());
         }
         TerminalNode blobLiteral = ctx.getToken(ConditionParser.BLOB_LITERAL, 0);
         if (blobLiteral != null) {
@@ -199,17 +220,20 @@ public class ParsingUtils {
     }
 
     /**
-     * Parses a {@code valueIdentifier} context and requires the result to be an {@link Integer}.
-     * Used by value-range elements where only integer operands are valid.
+     * Parses a {@code valueIdentifier} context and requires the result to be an integer ({@link Long}).
+     * <p>
+     * Note: currently unused — value-range elements now accept any type supported by
+     * {@link #objectToExp}. Retained for potential future use.
      *
      * @param ctx The valueIdentifier context from the parser
-     * @return The parsed integer value
+     * @return The parsed long value
      * @throws AelParseException if the parsed value is not an integer
      */
-    public static Integer requireIntValueIdentifier(ConditionParser.ValueIdentifierContext ctx) {
+    @SuppressWarnings("unused")
+    public static long requireIntValueIdentifier(ConditionParser.ValueIdentifierContext ctx) {
         Object result = parseValueIdentifier(ctx);
-        if (result instanceof Integer intValue) {
-            return intValue;
+        if (result instanceof Long longValue) {
+            return longValue;
         }
         throw new AelParseException(
                 "Value range requires integer operands, got: %s".formatted(ctx.getText()));
@@ -221,15 +245,50 @@ public class ParsingUtils {
      *
      * @param value The parsed value object
      * @return The corresponding {@link Exp} value expression
-     * @throws AelParseException if the value type is not supported
+     * @throws AelParseException if the value is null or its type is not supported
+     * @see #isSupportedExpType(Object)
      */
     public static Exp objectToExp(Object value) {
+        if (value == null) {
+            throw new AelParseException("Cannot convert null to Exp");
+        }
         if (value instanceof String s) return Exp.val(s);
         if (value instanceof Long l) return Exp.val(l);
         if (value instanceof Integer i) return Exp.val(i);
         if (value instanceof byte[] b) return Exp.val(b);
         throw new AelParseException(
                 "Unsupported value type for Exp conversion: " + value.getClass().getSimpleName());
+    }
+
+    /**
+     * Checks whether a value is one of the types supported by {@link #objectToExp}:
+     * {@link String}, {@link Integer}, {@link Long}, or {@code byte[]}.
+     */
+    private static boolean isSupportedExpType(Object value) {
+        return value instanceof String || value instanceof Integer
+                || value instanceof Long || value instanceof byte[];
+    }
+
+    /**
+     * Validates that a value is a supported type for {@link #objectToExp}.
+     * <p>
+     * Accepts {@link String}, {@link Integer}, {@link Long}, and {@code byte[]}.
+     * Both {@link #parseValueIdentifier} and {@link #parseMapKey} return {@link Long} for
+     * numeric values; {@link Integer} is kept for robustness when values are constructed directly.
+     *
+     * @param value   The value to check
+     * @param context Description for the error message (e.g. "MapValueRange start")
+     * @throws AelParseException if value is null or not a supported type
+     * @see #isSupportedExpType(Object)
+     */
+    public static void requireSupportedExpValue(Object value, String context) {
+        if (value == null) {
+            throw new AelParseException("Null value in %s".formatted(context));
+        }
+        if (!isSupportedExpType(value)) {
+            throw new AelParseException(
+                    "Unsupported value type in %s: %s".formatted(context, value.getClass().getSimpleName()));
+        }
     }
 
     /**
@@ -247,12 +306,69 @@ public class ParsingUtils {
     }
 
     /**
-     * @param a Integer, can be null
-     * @param b Integer, non-null
-     * @return a - b if a != null, otherwise null
+     * Length of half-open interval {@code [start, end)} for CDT index/rank {@code count} arguments,
+     * consistent with closed {@code {s:e}} parsing ({@code end} exclusive).
+     *
+     * @param start inclusive lower bound; {@code null} means absolute index/rank {@code 0} for span purposes
+     * @param end exclusive upper bound; {@code null} means upper-unbounded (tail selection)
+     * @return {@code end - start} when both finite; {@code end} when {@code start} is null; {@code null} when {@code end} is null
+     * @implNote When both {@code start} and {@code end} are non-null but {@code start > end}, the result is negative.
+     * The grammar does not validate ordering; callers {@link com.aerospike.ael.parts.cdt.map.MapIndexRange} forward this
+     * to Aerospike CDT APIs as with closed ranges.
      */
-    public static Integer subtractNullable(Integer a, @NonNull Integer b) {
-        return a == null ? null : a - b;
+    public static Integer halfOpenRangeCount(Integer start, Integer end) {
+        if (end == null) {
+            return null;
+        }
+        if (start == null) {
+            return end;
+        }
+        return end - start;
+    }
+
+    /**
+     * Parses {@link ConditionParser.KeyRangeIdentifierContext}: two keys, open upper ({@code key-}), or open lower ({@code -key}).
+     */
+    public static NullableEndpoints<Object> parseMapKeyRangeEndpoints(ConditionParser.KeyRangeIdentifierContext range) {
+        int keyCount = range.mapKey().size();
+        if (keyCount == 2) {
+            return new NullableEndpoints<>(parseMapKey(range.mapKey(0)), parseMapKey(range.mapKey(1)));
+        }
+        if (keyCount == 1) {
+            if (range.getChild(0) instanceof ConditionParser.MapKeyContext) {
+                return new NullableEndpoints<>(parseMapKey(range.mapKey(0)), null);
+            }
+            return new NullableEndpoints<>(null, parseMapKey(range.mapKey(0)));
+        }
+        throw new AelParseException("Could not parse map key range identifier: %s".formatted(range.getText()));
+    }
+
+    /**
+     * Parses {@link ConditionParser.ValueRangeIdentifierContext}: two values, open upper ({@code v:}), or open lower ({@code :v}).
+     */
+    public static NullableEndpoints<Object> parseValueRangeEndpoints(ConditionParser.ValueRangeIdentifierContext range) {
+        int n = range.valueIdentifier().size();
+        if (n == 2) {
+            return new NullableEndpoints<>(
+                    parseValueIdentifier(range.valueIdentifier(0)),
+                    parseValueIdentifier(range.valueIdentifier(1)));
+        }
+        if (n == 1) {
+            if (range.getChild(0) instanceof ConditionParser.ValueIdentifierContext) {
+                return new NullableEndpoints<>(parseValueIdentifier(range.valueIdentifier(0)), null);
+            }
+            return new NullableEndpoints<>(null, parseValueIdentifier(range.valueIdentifier(0)));
+        }
+        throw new AelParseException("Could not parse value range identifier: %s".formatted(range.getText()));
+    }
+
+    /**
+     * Nullable inclusive/exclusive endpoints for map key or value interval parsing.
+     *
+     * @param start inclusive lower bound for keys/values (CDT wire: null begin allowed)
+     * @param end exclusive upper bound (null end allowed)
+     */
+    public record NullableEndpoints<T>(T start, T end) {
     }
 
     /**

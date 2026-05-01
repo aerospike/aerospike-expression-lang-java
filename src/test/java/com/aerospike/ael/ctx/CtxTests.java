@@ -123,6 +123,22 @@ class CtxTests {
     }
 
     @Test
+    void mapExpression_halfOpenIndexRangeUnsupportedForCtx() {
+        assertThatThrownBy(() -> parseCtx("$.mapBin1.{:3}"))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("Could not parse the given AEL path input")
+                .hasStackTraceContaining("Context is not supported");
+    }
+
+    @Test
+    void listExpression_halfOpenIndexRangeUnsupportedForCtx() {
+        assertThatThrownBy(() -> parseCtx("$.listBin1.[:3]"))
+                .isInstanceOf(AelParseException.class)
+                .hasMessageContaining("Could not parse the given AEL path input")
+                .hasStackTraceContaining("Context is not supported");
+    }
+
+    @Test
     void existsPathFunctionRejected() {
         assertThatThrownBy(() -> parseCtx("$.mapBin1.a.exists()"))
                 .isInstanceOf(AelParseException.class)

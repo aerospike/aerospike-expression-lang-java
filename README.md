@@ -34,6 +34,12 @@ When modifying the grammar file you will need to re-generate the ANTLR sources b
 
 `mvn clean generate-sources compile`
 
+## CDT ranges
+
+Map and list path segments support closed-boundaries and half-open ranges.
+Semantics follow Aerospike CDT conventions (inclusive lower / exclusive upper for keys and values where applicable).
+See [Guide: Working with Lists and Maps — CDT ranges](docs/guides/02-working-with-lists-and-maps.md#cdt-ranges).
+
 ## Usage examples
 
 ### Parsing AEL expression
