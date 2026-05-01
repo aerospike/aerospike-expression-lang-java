@@ -75,6 +75,7 @@ public class ParsingUtils {
     /**
      * Resolves the string content from a parser rule context that may contain
      * NAME_IDENTIFIER, QUOTED_STRING, or IN tokens.
+     * Rejects unquoted reserved words with a descriptive error.
      *
      * @param ctx Any parser rule context containing string-like tokens
      * @return The resolved string, or {@code null} if no matching token is found
@@ -92,7 +93,19 @@ public class ParsingUtils {
         if (in != null) {
             return in.getText();
         }
+        rejectUnquotedReservedWord(ctx);
         return null;
+    }
+
+    private static void rejectUnquotedReservedWord(ParserRuleContext ctx) {
+        ConditionParser.ReservedWordContext rw = ctx.getRuleContext(
+                ConditionParser.ReservedWordContext.class, 0);
+        if (rw != null) {
+            String text = rw.getText();
+            throw new AelParseException(
+                    "'%s' is a reserved word and must be quoted when used as a CDT part, e.g., $.<binName>.'%s' or $.<binName>.\"%s\""
+                            .formatted(text, text, text));
+        }
     }
 
     /**

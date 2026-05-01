@@ -366,7 +366,7 @@ public class VisitorUtils {
                 }
                 yield anotherPart.getExp();
             }
-            case PATH_OPERAND, VARIABLE_OPERAND -> anotherPart.getExp();
+            case PATH_OPERAND, VARIABLE_OPERAND, UNKNOWN_OPERAND -> anotherPart.getExp();
             case BIN_PART -> {
                 // Both are bin parts
                 validateComparableTypes(binPart.getExpType(), anotherPart.getExpType());
@@ -1138,8 +1138,10 @@ public class VisitorUtils {
      */
     private static void replacePlaceholdersInExclusiveStructure(AbstractPart part, PlaceholderValues placeholderValues) {
         ExclusiveStructure exclStructure = (ExclusiveStructure) part;
-        for (ExpressionContainer exprContainer : exclStructure.getOperands()) {
-            replacePlaceholdersInExprContainer(exprContainer, placeholderValues);
+        for (AbstractPart operand : exclStructure.getOperands()) {
+            if (operand instanceof ExpressionContainer ec) {
+                replacePlaceholdersInExprContainer(ec, placeholderValues);
+            }
         }
     }
 
@@ -1438,9 +1440,8 @@ public class VisitorUtils {
      */
     private static Exp exclStructureToExp(ExpressionContainer expr) {
         List<Exp> expressions = new ArrayList<>();
-        ExclusiveStructure exclOperandsList = (ExclusiveStructure) expr.getLeft(); // extract unary Expr operand
-        List<ExpressionContainer> operands = exclOperandsList.getOperands();
-        for (ExpressionContainer part : operands) {
+        ExclusiveStructure exclOperandsList = (ExclusiveStructure) expr.getLeft();
+        for (AbstractPart part : exclOperandsList.getOperands()) {
             expressions.add(getExp(part));
         }
         return Exp.exclusive(expressions.toArray(new Exp[0]));
@@ -1448,8 +1449,7 @@ public class VisitorUtils {
 
     private static Exp orStructureToExp(ExpressionContainer expr) {
         List<Exp> expressions = new ArrayList<>();
-        List<ExpressionContainer> operands = ((OrStructure) expr.getLeft()).getOperands();
-        for (ExpressionContainer part : operands) {
+        for (AbstractPart part : ((OrStructure) expr.getLeft()).getOperands()) {
             expressions.add(getExp(part));
         }
         return Exp.or(expressions.toArray(new Exp[0]));
@@ -1463,17 +1463,16 @@ public class VisitorUtils {
      */
     private static Exp andStructureToExp(ExpressionContainer expr) {
         List<Exp> expressions = new ArrayList<>();
-        List<ExpressionContainer> operands = ((AndStructure) expr.getLeft()).getOperands();
-        for (ExpressionContainer part : operands) {
+        for (AbstractPart part : ((AndStructure) expr.getLeft()).getOperands()) {
             Exp exp = getExp(part);
-            if (exp != null) expressions.add(exp); // Exp can be null if it is already used in secondary index
+            if (exp != null) expressions.add(exp);
         }
         if (expressions.isEmpty()) {
             return null;
         } else if (expressions.size() > 1) {
             return Exp.and(expressions.toArray(new Exp[0]));
         }
-        return expressions.get(0); // When there is only one Exp return it
+        return expressions.get(0);
     }
 
     /**
@@ -2019,7 +2018,7 @@ public class VisitorUtils {
         }
 
         if (part.getPartType() == AbstractPart.PartType.AND_STRUCTURE && depth > 0) {
-            List<ExpressionContainer> containerList = ((AndStructure) part).getOperands();
+            List<AbstractPart> containerList = ((AndStructure) part).getOperands();
             containerList.forEach(container -> traverseTree(container, visitor, depth - 1, stopCondition));
         }
 
