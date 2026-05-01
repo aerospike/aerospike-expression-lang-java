@@ -164,7 +164,9 @@ public interface AelParser {
      * @param input        {@link ExpressionContext} containing input string of dot separated elements. If the input string has
      *                     placeholders, matching values must be provided within {@code input} too
      * @param indexContext Class containing namespace and collection of {@link Index} objects that represent
-     *                     existing secondary indexes. Required for creating {@link Filter}. Can be null
+     *                     existing secondary indexes (optionally including per-index {@code setName} and a query set
+     *                     on {@link IndexContext} aligned with {@code Statement.setSetName}).
+     *                     Required for creating {@link Filter}. Can be null
      * @return {@link ParsedExpression} object
      * @throws AelParseException in case of invalid syntax
      */

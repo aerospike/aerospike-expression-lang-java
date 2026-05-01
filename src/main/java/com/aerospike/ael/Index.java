@@ -13,16 +13,22 @@ import lombok.Getter;
  * Mandatory fields: {@code namespace}, {@code bin}, {@code indexType}.
  * These are validated on build and must not be null/blank (for strings).
  * {@code binValuesRatio} defaults to 0 if not set and must not be negative.
+ * <p>
+ * Optional {@code setName} is the Aerospike set this index is defined on; it is used together with
+ * {@link IndexContext} when a query set is supplied for secondary-index selection.
  */
-@Builder
-@EqualsAndHashCode
 @Getter
+@EqualsAndHashCode
 public class Index {
 
     /**
      * Namespace of the indexed bin
      */
     private final String namespace;
+    /**
+     * Aerospike set this index is defined on, if known ({@code null} when unspecified).
+     */
+    private final String setName;
     /**
      * Name of the indexed bin
      */
@@ -49,16 +55,26 @@ public class Index {
      */
     private final CTX[] ctx;
 
-    public Index(String namespace, String bin, String name, IndexType indexType, int binValuesRatio,
-                 IndexCollectionType indexCollectionType, CTX[] ctx) {
-        validateMandatory(namespace, bin, indexType, binValuesRatio);
+    @Builder
+    private Index(String namespace, String setName, String bin, String name, IndexType indexType,
+                  Integer binValuesRatio, IndexCollectionType indexCollectionType, CTX[] ctx) {
+        int ratio = binValuesRatio != null ? binValuesRatio : 0;
+        validateMandatory(namespace, bin, indexType, ratio);
         this.namespace = namespace;
+        this.setName = normalizeSetName(setName);
         this.bin = bin;
         this.name = name;
         this.indexType = indexType;
-        this.binValuesRatio = binValuesRatio;
+        this.binValuesRatio = ratio;
         this.indexCollectionType = indexCollectionType;
         this.ctx = ctx;
+    }
+
+    private static String normalizeSetName(String setName) {
+        if (setName == null || setName.isBlank()) {
+            return null;
+        }
+        return setName;
     }
 
     private static void validateMandatory(String namespace, String bin, IndexType indexType, int binValuesRatio) {

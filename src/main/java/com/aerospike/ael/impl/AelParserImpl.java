@@ -82,15 +82,22 @@ public class AelParserImpl implements AelParser {
 
     private ParsedExpression getParsedExpression(ParseTree parseTree, PlaceholderValues placeholderValues,
                                                  IndexContext indexContext) {
-        final String namespace = Optional.ofNullable(indexContext)
-                .map(IndexContext::getNamespace)
-                .orElse(null);
+        String namespace = null;
+        String querySet = null;
+        Collection<Index> indexes = null;
+        String preferredBin = null;
+
+        if (indexContext != null) {
+            namespace = indexContext.getNamespace();
+            querySet = indexContext.getQuerySet();
+            indexes = indexContext.getIndexes();
+            preferredBin = indexContext.getPreferredBin();
+        }
 
         Map<String, List<Index>> indexesMap = buildIndexesMap(
-                Optional.ofNullable(indexContext).map(IndexContext::getIndexes).orElse(null), namespace);
-        String preferredBin = Optional.ofNullable(indexContext)
-                .map(IndexContext::getPreferredBin)
-                .orElse(null);
+                indexes,
+                namespace,
+                querySet);
 
         AbstractPart resultingPart = new ExpressionConditionVisitor().visit(parseTree);
 
@@ -101,10 +108,12 @@ public class AelParserImpl implements AelParser {
         return new ParsedExpression(resultingPart, placeholderValues, indexesMap, preferredBin);
     }
 
-    private Map<String, List<Index>> buildIndexesMap(Collection<Index> indexes, String namespace) {
+    private Map<String, List<Index>> buildIndexesMap(Collection<Index> indexes, String namespace,
+                                                     String querySet) {
         if (indexes == null || indexes.isEmpty() || namespace == null) return Collections.emptyMap();
         return indexes.stream()
                 .filter(idx -> namespace.equals(idx.getNamespace()))
+                .filter(idx -> IndexContext.indexMatchesQuerySet(idx, querySet))
                 .collect(Collectors.groupingBy(Index::getBin));
     }
 }

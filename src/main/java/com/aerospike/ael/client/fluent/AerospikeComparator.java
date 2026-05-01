@@ -28,8 +28,7 @@ import java.util.Map;
 /**
  * Comparator that orders objects according to the Aerospike server's
  * type ordering hierarchy:
- * NIL(1) < BOOLEAN(2) < INTEGER(3) < STRING(4) < LIST(5) < MAP(6)
- * < BYTES(7) < DOUBLE(8) < GEOJSON(9).
+ * {@code NIL(1) < BOOLEAN(2) < INTEGER(3) < STRING(4) < LIST(5) < MAP(6) < BYTES(7) < DOUBLE(8) < GEOJSON(9)}.
  * <p>
  * Cross-type comparison is strictly by type ordinal — there is no
  * numeric promotion between INTEGER and DOUBLE.
